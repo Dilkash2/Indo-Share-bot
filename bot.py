@@ -1,8 +1,14 @@
-
 import os
 import sqlite3
 import asyncio
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    WebAppInfo,
+)
+
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -11,17 +17,16 @@ from telegram.ext import (
     filters,
 )
 
+
 # =========================
 # SETTINGS
 # =========================
 
-BOT_TOKEN = os.getenv("8874481251:AAGvfjfEbuGBj-cFcwieBbV7v5JDM2Mlyo0")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-# Tumhari GitHub Pages Mini App
 MINI_APP_URL = "https://dilkash2.github.io/Indo-Share-bot/"
 
-# Apna Telegram numeric user ID yahan baad mein set karna
-ADMIN_ID = int(os.getenv("8874481251", "0"))
+ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
 
 DB_NAME = "files.db"
 
@@ -51,7 +56,7 @@ def save_file(code, file_id):
     cur = conn.cursor()
 
     cur.execute(
-        "INSERT INTO files (code, file_id) VALUES (?, ?)",
+        "INSERT OR REPLACE INTO files (code, file_id) VALUES (?, ?)",
         (code, file_id)
     )
 
@@ -89,19 +94,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Normal /start
     if not args:
 
-        keyboard = [
-            [
-                InlineKeyboardButton(
-                    "📤 UPLOAD FILE",
-                    callback_data="upload_info"
-                )
-            ]
-        ]
-
         await update.message.reply_text(
             "👋 Welcome to Indo Share Bot!\n\n"
-            "File link open karne ke liye apna file link use karein.",
-            reply_markup=InlineKeyboardMarkup(keyboard)
+            "📁 File lene ke liye channel se file link open karein."
         )
 
         return
@@ -112,9 +107,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     file_id = get_file(code)
 
     if not file_id:
+
         await update.message.reply_text(
             "❌ File nahi mili ya link invalid hai."
         )
+
         return
 
     keyboard = [
@@ -136,30 +133,36 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # =========================
-# UPLOAD
+# UPLOAD COMMAND
 # =========================
 
-async def upload_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def upload_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
 
     if update.effective_user.id != ADMIN_ID:
 
         await update.message.reply_text(
-            "❌ Sirf admin is command ka use kar sakta hai."
+            "❌ Sirf admin file upload kar sakta hai."
         )
 
         return
 
     await update.message.reply_text(
-        "📤 Ab mujhe koi file bhejo.\n\n"
-        "Main uska unique download link bana dunga."
+        "📤 Ab mujhe file bhejo.\n\n"
+        "Main uska unique link bana dunga."
     )
 
 
 # =========================
-# FILE RECEIVER
+# RECEIVE FILE
 # =========================
 
-async def receive_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def receive_file(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
 
     if update.effective_user.id != ADMIN_ID:
         return
@@ -168,47 +171,78 @@ async def receive_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Document
     if update.message.document:
+
         telegram_file_id = update.message.document.file_id
 
     # Video
     elif update.message.video:
+
         telegram_file_id = update.message.video.file_id
 
     # Audio
     elif update.message.audio:
+
         telegram_file_id = update.message.audio.file_id
 
     # Photo
     elif update.message.photo:
+
         telegram_file_id = update.message.photo[-1].file_id
 
     if not telegram_file_id:
+
         await update.message.reply_text(
             "❌ Ye file type supported nahi hai."
         )
+
         return
 
     # Unique code
     code = f"file_{update.message.message_id}"
 
-    save_file(code, telegram_file_id)
+    save_file(
+        code,
+        telegram_file_id
+    )
 
     bot_username = context.bot.username
 
     link = f"https://t.me/{bot_username}?start={code}"
 
     await update.message.reply_text(
-        "✅ File successfully saved!\n\n"
+        "✅ FILE SAVED SUCCESSFULLY!\n\n"
         f"🔗 File Link:\n{link}\n\n"
-        "Is link ko apne Telegram channel mein post kar sakte ho."
+        "Is link ko Telegram channel mein post kar sakte ho."
     )
 
 
 # =========================
-# GET FILE
+# ADMIN COMMAND
 # =========================
 
-async def send_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def admin_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    if update.effective_user.id != ADMIN_ID:
+        return
+
+    await update.message.reply_text(
+        "👑 ADMIN PANEL\n\n"
+        "/upload - File upload karein\n"
+        "/admin - Admin commands"
+    )
+
+
+# =========================
+# SEND FILE
+# =========================
+
+async def send_file(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
 
     if not context.args:
         return
@@ -218,9 +252,11 @@ async def send_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     file_id = get_file(code)
 
     if not file_id:
+
         await update.message.reply_text(
             "❌ File nahi mili."
         )
+
         return
 
     keyboard = [
@@ -236,24 +272,8 @@ async def send_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
         "🔐 Verification required.\n\n"
-        "Verification complete karke file receive karein.",
+        "Neeche button dabakar verification complete karein.",
         reply_markup=InlineKeyboardMarkup(keyboard)
-    )
-
-
-# =========================
-# ADMIN HELP
-# =========================
-
-async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    if update.effective_user.id != ADMIN_ID:
-        return
-
-    await update.message.reply_text(
-        "👑 Admin Commands\n\n"
-        "/upload - File upload karein\n"
-        "/start - Bot start\n"
     )
 
 
@@ -264,40 +284,69 @@ async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
 
     if not BOT_TOKEN:
+
         raise ValueError(
             "BOT_TOKEN environment variable missing hai."
         )
 
+    if ADMIN_ID == 0:
+
+        raise ValueError(
+            "ADMIN_ID environment variable missing hai."
+        )
+
     init_db()
 
-    app = Application.builder().token(BOT_TOKEN).build()
+    app = (
+        Application
+        .builder()
+        .token(BOT_TOKEN)
+        .build()
+    )
 
+    # Commands
     app.add_handler(
-        CommandHandler("start", start)
+        CommandHandler(
+            "start",
+            start
+        )
     )
 
     app.add_handler(
-        CommandHandler("upload", upload_command)
+        CommandHandler(
+            "upload",
+            upload_command
+        )
     )
 
     app.add_handler(
-        CommandHandler("admin", admin_command)
+        CommandHandler(
+            "admin",
+            admin_command
+        )
     )
 
+    # File receiver
     app.add_handler(
         MessageHandler(
-            filters.Document.ALL |
-            filters.VIDEO |
-            filters.AUDIO |
-            filters.PHOTO,
+            filters.Document.ALL
+            | filters.VIDEO
+            | filters.AUDIO
+            | filters.PHOTO,
             receive_file
         )
     )
 
-    print("🤖 Indo Share Bot Started...")
+    print(
+        "🤖 Indo Share Bot Started..."
+    )
 
     app.run_polling()
 
+
+# =========================
+# RUN
+# =========================
 
 if __name__ == "__main__":
     main()
