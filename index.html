@@ -6,7 +6,6 @@
 
 <title>File Verification</title>
 
-<!-- Telegram Mini App -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
@@ -202,8 +201,7 @@ button:disabled {
             <button
                 class="verify-btn"
                 id="verifyBtn"
-                disabled
-            >
+                disabled>
                 ⏳ WAIT...
             </button>
 
@@ -223,20 +221,18 @@ button:disabled {
 
             <div class="subtitle">
                 Advertisement step completed.
-                Continue verification to get your file.
+                Continue verification.
             </div>
 
             <button
                 class="back-btn"
-                onclick="goBack()"
-            >
+                onclick="goBack()">
                 ↩️ BACK
             </button>
 
             <button
                 class="verify-btn"
-                onclick="completeVerification()"
-            >
+                onclick="completeVerification()">
                 ✅ VERIFY & CONTINUE
             </button>
 
@@ -264,33 +260,9 @@ button:disabled {
 
             <button
                 class="file-btn"
-                id="getFileBtn"
-                onclick="getFile()"
-            >
+                onclick="getFile()">
                 📥 GET FILE
             </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- SENDING -->
-    <div id="sending" class="step">
-
-        <div class="card success">
-
-            <div class="success-icon">
-                📤
-            </div>
-
-            <div class="title">
-                Sending File...
-            </div>
-
-            <p class="subtitle">
-                Please wait. Telegram bot is sending your file.
-            </p>
 
         </div>
 
@@ -312,8 +284,7 @@ button:disabled {
 
             <button
                 class="verify-btn"
-                onclick="location.reload()"
-            >
+                onclick="location.reload()">
                 🔄 TRY AGAIN
             </button>
 
@@ -331,9 +302,9 @@ button:disabled {
 
 <script>
 
-/* =========================
+/* =====================================
    TELEGRAM MINI APP
-========================= */
+===================================== */
 
 const tg = window.Telegram.WebApp;
 
@@ -341,9 +312,9 @@ tg.ready();
 tg.expand();
 
 
-/* =========================
-   GET FILE CODE
-========================= */
+/* =====================================
+   GET FILE CODE FROM URL
+===================================== */
 
 const urlParams = new URLSearchParams(
     window.location.search
@@ -352,21 +323,22 @@ const urlParams = new URLSearchParams(
 const fileCode = urlParams.get("file");
 
 
-/* =========================
+/* =====================================
    MAIN 5 MINUTE TIMER
-========================= */
+===================================== */
 
 let mainSeconds = 300;
 
 const mainTimer = setInterval(function () {
 
-    let minutes = Math.floor(mainSeconds / 60);
-    let seconds = mainSeconds % 60;
+    const minutes = Math.floor(mainSeconds / 60);
+    const seconds = mainSeconds % 60;
 
     document.getElementById("mainTimer").innerText =
         String(minutes).padStart(2, "0") +
         ":" +
         String(seconds).padStart(2, "0");
+
 
     if (mainSeconds <= 0) {
 
@@ -374,7 +346,16 @@ const mainTimer = setInterval(function () {
 
         clearInterval(adTimer);
 
-        showExpired();
+        document
+            .querySelectorAll(".step")
+            .forEach(function(step) {
+                step.classList.remove("active");
+            });
+
+        document
+            .getElementById("expired")
+            .classList.add("active");
+
         return;
     }
 
@@ -383,9 +364,9 @@ const mainTimer = setInterval(function () {
 }, 1000);
 
 
-/* =========================
+/* =====================================
    AD 20 SECOND TIMER
-========================= */
+===================================== */
 
 let adSeconds = 20;
 
@@ -394,6 +375,7 @@ const adTimer = setInterval(function () {
     document.getElementById("adTimer").innerText =
         "Advertisement: " + adSeconds + "s";
 
+
     if (adSeconds <= 0) {
 
         clearInterval(adTimer);
@@ -401,14 +383,20 @@ const adTimer = setInterval(function () {
         document.getElementById("adTimer").innerText =
             "✅ Advertisement step completed";
 
+
         const btn =
             document.getElementById("verifyBtn");
 
         btn.disabled = false;
-        btn.innerText = "✅ CONTINUE";
+
+        btn.innerText =
+            "✅ CONTINUE";
+
 
         btn.onclick = function () {
+
             showStep(2);
+
         };
 
         return;
@@ -419,9 +407,9 @@ const adTimer = setInterval(function () {
 }, 1000);
 
 
-/* =========================
+/* =====================================
    SHOW STEP
-========================= */
+===================================== */
 
 function showStep(number) {
 
@@ -433,35 +421,16 @@ function showStep(number) {
 
         });
 
+
     document
         .getElementById("step" + number)
         .classList.add("active");
 }
 
 
-/* =========================
-   EXPIRED
-========================= */
-
-function showExpired() {
-
-    document
-        .querySelectorAll(".step")
-        .forEach(function(step) {
-
-            step.classList.remove("active");
-
-        });
-
-    document
-        .getElementById("expired")
-        .classList.add("active");
-}
-
-
-/* =========================
+/* =====================================
    BACK
-========================= */
+===================================== */
 
 function goBack() {
 
@@ -470,11 +439,22 @@ function goBack() {
 }
 
 
-/* =========================
-   VERIFICATION COMPLETE
-========================= */
+/* =====================================
+   COMPLETE VERIFICATION
+===================================== */
 
 function completeVerification() {
+
+    showStep(3);
+
+}
+
+
+/* =====================================
+   GET FILE
+===================================== */
+
+function getFile() {
 
     if (!fileCode) {
 
@@ -485,93 +465,28 @@ function completeVerification() {
         return;
     }
 
-    showStep(3);
 
-}
+    /*
+       Telegram Mini App se
+       file code Bot ko bhejna
+    */
 
-
-/* =========================
-   GET FILE
-========================= */
-
-function getFile() {
-
-    if (!fileCode) {
-
-        alert(
-            "❌ File code missing hai."
-        );
-
-        return;
-    }
-
-
-    const button =
-        document.getElementById("getFileBtn");
-
-    button.disabled = true;
-    button.innerText = "📤 SENDING...";
+    tg.sendData(fileCode);
 
 
     /*
-       Telegram Mini App se bot ko
-       file code bheja ja raha hai.
+       Telegram Mini App close
     */
 
-    try {
+    setTimeout(function () {
 
-        tg.sendData(
-            JSON.stringify({
-                file: fileCode
-            })
-        );
+        tg.close();
 
-        /*
-           Telegram Mini App close hoga
-           aur bot received data ke basis
-           par file send karega.
-        */
+    }, 500);
 
-        setTimeout(function () {
-
-            showSending();
-
-        }, 300);
-
-    } catch (error) {
-
-        console.error(error);
-
-        button.disabled = false;
-        button.innerText = "📥 GET FILE";
-
-        alert(
-            "❌ Telegram connection error."
-        );
-    }
-}
-
-
-/* =========================
-   SENDING SCREEN
-========================= */
-
-function showSending() {
-
-    document
-        .querySelectorAll(".step")
-        .forEach(function(step) {
-
-            step.classList.remove("active");
-
-        });
-
-    document
-        .getElementById("sending")
-        .classList.add("active");
 }
 
 </script>
 
 </body>
-        </html>
+    </html>
