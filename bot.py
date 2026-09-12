@@ -1,16 +1,11 @@
 import os
 import sqlite3
-import asyncio
-import json
 
 from telegram import (
     Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     WebAppInfo,
-    ReplyKeyboardMarkup,
-    KeyboardButton,
-    ReplyKeyboardRemove,
 )
 
 from telegram.ext import (
@@ -48,34 +43,22 @@ def init_db():
         CREATE TABLE IF NOT EXISTS files (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             code TEXT UNIQUE NOT NULL,
-            file_id TEXT NOT NULL,
-            file_type TEXT DEFAULT 'document'
+            file_id TEXT NOT NULL
         )
     """)
-
-    try:
-        cur.execute(
-            "ALTER TABLE files ADD COLUMN file_type TEXT DEFAULT 'document'"
-        )
-    except sqlite3.OperationalError:
-        pass
 
     conn.commit()
     conn.close()
 
 
-def save_file(code, file_id, file_type):
+def save_file(code, file_id):
 
     conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
 
     cur.execute(
-        """
-        INSERT OR REPLACE INTO files
-        (code, file_id, file_type)
-        VALUES (?, ?, ?)
-        """,
-        (code, file_id, file_type)
+        "INSERT OR REPLACE INTO files (code, file_id) VALUES (?, ?)",
+        (code, file_id)
     )
 
     conn.commit()
@@ -88,11 +71,7 @@ def get_file(code):
     cur = conn.cursor()
 
     cur.execute(
-        """
-        SELECT file_id, file_type
-        FROM files
-        WHERE code = ?
-        """,
+        "SELECT file_id FROM files WHERE code = ?",
         (code,)
     )
 
@@ -100,7 +79,10 @@ def get_file(code):
 
     conn.close()
 
-    return result
+    if result:
+        return result[0]
+
+    return None
 
 
 # =========================
@@ -114,20 +96,29 @@ async def start(
 
     args = context.args
 
+    # -------------------------
+    # NORMAL /START
+    # -------------------------
+
     if not args:
 
         await update.message.reply_text(
             "👋 Welcome to Indo Share Bot!\n\n"
-            "📁 Channel se file link open karke file receive karein."
+            "📁 File lene ke liye channel se file link open karein."
         )
 
         return
 
+
+    # -------------------------
+    # FILE LINK
+    # -------------------------
+
     code = args[0]
 
-    file_data = get_file(code)
+    file_id = get_file(code)
 
-    if not file_data:
+    if not file_id:
 
         await update.message.reply_text(
             "❌ File nahi mili ya link invalid hai."
@@ -135,10 +126,15 @@ async def start(
 
         return
 
+
+    # -------------------------
+    # WATCH AD BUTTON
+    # -------------------------
+
     keyboard = [
         [
-            KeyboardButton(
-                "🚀 Verify & Get File",
+            InlineKeyboardButton(
+                "📺 Watch Ad & Unlock",
                 web_app=WebAppInfo(
                     url=f"{MINI_APP_URL}?file={code}"
                 )
@@ -146,16 +142,12 @@ async def start(
         ]
     ]
 
-    reply_markup = ReplyKeyboardMarkup(
-        keyboard,
-        resize_keyboard=True,
-        one_time_keyboard=True
-    )
 
     await update.message.reply_text(
-        "📁 File Ready!\n\n"
-        "Neeche button dabakar verification complete karein.",
-        reply_markup=reply_markup
+        "🔒 One quick step\n\n"
+        "Watch a short ad to unlock this file,\n"
+        "then you'll be brought right back.",
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 
@@ -176,6 +168,7 @@ async def upload_command(
 
         return
 
+
     await update.message.reply_text(
         "📤 Ab mujhe file bhejo.\n\n"
         "Main uska unique link bana dunga."
@@ -194,28 +187,33 @@ async def receive_file(
     if update.effective_user.id != ADMIN_ID:
         return
 
-    telegram_file_id = None
-    file_type = None
 
+    telegram_file_id = None
+
+
+    # Document
     if update.message.document:
 
         telegram_file_id = update.message.document.file_id
-        file_type = "document"
 
+
+    # Video
     elif update.message.video:
 
         telegram_file_id = update.message.video.file_id
-        file_type = "video"
 
+
+    # Audio
     elif update.message.audio:
 
         telegram_file_id = update.message.audio.file_id
-        file_type = "audio"
 
+
+    # Photo
     elif update.message.photo:
 
         telegram_file_id = update.message.photo[-1].file_id
-        file_type = "photo"
+
 
     if not telegram_file_id:
 
@@ -225,17 +223,21 @@ async def receive_file(
 
         return
 
+
+    # Unique file code
     code = f"file_{update.message.message_id}"
+
 
     save_file(
         code,
-        telegram_file_id,
-        file_type
+        telegram_file_id
     )
+
 
     bot_username = context.bot.username
 
     link = f"https://t.me/{bot_username}?start={code}"
+
 
     await update.message.reply_text(
         "✅ FILE SAVED SUCCESSFULLY!\n\n"
@@ -253,152 +255,54 @@ async def web_app_data(
     context: ContextTypes.DEFAULT_TYPE
 ):
 
-    message = update.effective_message
-
-    if not message:
+    if not update.message.web_app_data:
         return
 
-    if not message.web_app_data:
-        return
 
-    try:
+    code = update.message.web_app_data.data
 
-        data = json.loads(
-            message.web_app_data.data
-        )
+    file_id = get_file(code)
 
-        code = data.get("file")
 
-    except Exception as e:
+    if not file_id:
 
-        print(
-            f"Web App data error: {e}"
-        )
-
-        await message.reply_text(
-            "❌ Verification data invalid hai."
-        )
-
-        return
-
-    if not code:
-
-        await message.reply_text(
-            "❌ File code missing hai."
-        )
-
-        return
-
-    file_data = get_file(code)
-
-    if not file_data:
-
-        await message.reply_text(
+        await update.message.reply_text(
             "❌ File nahi mili ya link expire ho gaya."
         )
 
         return
 
-    file_id, file_type = file_data
+
+    # -------------------------
+    # SEND FILE TO USER
+    # -------------------------
 
     try:
 
-        # Remove Web App keyboard
-        await message.reply_text(
-            "📥 File bheji ja rahi hai...",
-            reply_markup=ReplyKeyboardRemove()
+        await update.message.reply_text(
+            "📤 File sending..."
         )
 
-        # =========================
-        # FILE MESSAGE CAPTION
-        # =========================
 
-        caption = (
-            "📥 Your File\n\n"
-            "⚠️ Ye file 90 seconds baad delete ho jayegi.\n\n"
-            "📌 Isliye file ko turant Saved Messages "
-            "mein forward/save kar lo."
+        await context.bot.send_document(
+            chat_id=update.effective_chat.id,
+            document=file_id,
+            caption=(
+                "✅ File Ready!\n\n"
+                "⚠️ Ye file limited time ke liye available hai.\n"
+                "📌 Isliye file ko apne Saved Messages "
+                "mein forward/save kar lena."
+            )
         )
 
-        # =========================
-        # SEND DOCUMENT
-        # =========================
-
-        if file_type == "document":
-
-            sent_message = await message.reply_document(
-                document=file_id,
-                caption=caption
-            )
-
-        # =========================
-        # SEND VIDEO
-        # =========================
-
-        elif file_type == "video":
-
-            sent_message = await message.reply_video(
-                video=file_id,
-                caption=caption
-            )
-
-        # =========================
-        # SEND AUDIO
-        # =========================
-
-        elif file_type == "audio":
-
-            sent_message = await message.reply_audio(
-                audio=file_id,
-                caption=caption
-            )
-
-        # =========================
-        # SEND PHOTO
-        # =========================
-
-        elif file_type == "photo":
-
-            sent_message = await message.reply_photo(
-                photo=file_id,
-                caption=caption
-            )
-
-        else:
-
-            sent_message = await message.reply_document(
-                document=file_id,
-                caption=caption
-            )
-
-        # =========================
-        # DELETE AFTER 90 SECONDS
-        # =========================
-
-        await asyncio.sleep(90)
-
-        try:
-
-            await sent_message.delete()
-
-            print(
-                f"File message deleted: {code}"
-            )
-
-        except Exception as e:
-
-            print(
-                f"Delete error: {e}"
-            )
 
     except Exception as e:
 
-        print(
-            f"File sending error: {e}"
-        )
+        print("FILE SEND ERROR:", e)
 
-        await message.reply_text(
-            "❌ File send nahi ho saki."
+        await update.message.reply_text(
+            "❌ File send nahi ho paayi.\n"
+            "Please dobara try karein."
         )
 
 
@@ -413,6 +317,7 @@ async def admin_command(
 
     if update.effective_user.id != ADMIN_ID:
         return
+
 
     await update.message.reply_text(
         "👑 ADMIN PANEL\n\n"
@@ -433,13 +338,16 @@ def main():
             "BOT_TOKEN environment variable missing hai."
         )
 
+
     if ADMIN_ID == 0:
 
         raise ValueError(
             "ADMIN_ID environment variable missing hai."
         )
 
+
     init_db()
+
 
     app = (
         Application
@@ -447,6 +355,7 @@ def main():
         .token(BOT_TOKEN)
         .build()
     )
+
 
     # /start
     app.add_handler(
@@ -456,6 +365,7 @@ def main():
         )
     )
 
+
     # /upload
     app.add_handler(
         CommandHandler(
@@ -463,6 +373,7 @@ def main():
             upload_command
         )
     )
+
 
     # /admin
     app.add_handler(
@@ -472,7 +383,8 @@ def main():
         )
     )
 
-    # Mini App → Bot
+
+    # Telegram Mini App se data receive
     app.add_handler(
         MessageHandler(
             filters.StatusUpdate.WEB_APP_DATA,
@@ -480,7 +392,8 @@ def main():
         )
     )
 
-    # File receiver
+
+    # Files receive
     app.add_handler(
         MessageHandler(
             filters.Document.ALL
@@ -491,9 +404,11 @@ def main():
         )
     )
 
+
     print(
         "🤖 Indo Share Bot Started..."
     )
+
 
     app.run_polling()
 
@@ -503,5 +418,4 @@ def main():
 # =========================
 
 if __name__ == "__main__":
-
     main()
