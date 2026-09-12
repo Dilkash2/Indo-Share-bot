@@ -114,7 +114,6 @@ async def start(
 
     args = context.args
 
-    # Normal /start
     if not args:
 
         await update.message.reply_text(
@@ -135,9 +134,6 @@ async def start(
         )
 
         return
-
-    # IMPORTANT:
-    # sendData() ke liye Web App ko Reply Keyboard se launch kar rahe hain.
 
     keyboard = [
         [
@@ -201,25 +197,21 @@ async def receive_file(
     telegram_file_id = None
     file_type = None
 
-    # Document
     if update.message.document:
 
         telegram_file_id = update.message.document.file_id
         file_type = "document"
 
-    # Video
     elif update.message.video:
 
         telegram_file_id = update.message.video.file_id
         file_type = "video"
 
-    # Audio
     elif update.message.audio:
 
         telegram_file_id = update.message.audio.file_id
         file_type = "audio"
 
-    # Photo
     elif update.message.photo:
 
         telegram_file_id = update.message.photo[-1].file_id
@@ -233,7 +225,6 @@ async def receive_file(
 
         return
 
-    # Unique code
     code = f"file_{update.message.message_id}"
 
     save_file(
@@ -319,6 +310,17 @@ async def web_app_data(
         )
 
         # =========================
+        # FILE MESSAGE CAPTION
+        # =========================
+
+        caption = (
+            "📥 Your File\n\n"
+            "⚠️ Ye file 90 seconds baad delete ho jayegi.\n\n"
+            "📌 Isliye file ko turant Saved Messages "
+            "mein forward/save kar lo."
+        )
+
+        # =========================
         # SEND DOCUMENT
         # =========================
 
@@ -326,10 +328,7 @@ async def web_app_data(
 
             sent_message = await message.reply_document(
                 document=file_id,
-                caption=(
-                    "📥 Your File\n\n"
-                    "⏳ Ye file 90 seconds baad delete ho jayegi."
-                )
+                caption=caption
             )
 
         # =========================
@@ -340,10 +339,7 @@ async def web_app_data(
 
             sent_message = await message.reply_video(
                 video=file_id,
-                caption=(
-                    "📥 Your File\n\n"
-                    "⏳ Ye file 90 seconds baad delete ho jayegi."
-                )
+                caption=caption
             )
 
         # =========================
@@ -354,10 +350,7 @@ async def web_app_data(
 
             sent_message = await message.reply_audio(
                 audio=file_id,
-                caption=(
-                    "📥 Your File\n\n"
-                    "⏳ Ye file 90 seconds baad delete ho jayegi."
-                )
+                caption=caption
             )
 
         # =========================
@@ -368,16 +361,14 @@ async def web_app_data(
 
             sent_message = await message.reply_photo(
                 photo=file_id,
-                caption=(
-                    "📥 Your File\n\n"
-                    "⏳ Ye file 90 seconds baad delete ho jayegi."
-                )
+                caption=caption
             )
 
         else:
 
             sent_message = await message.reply_document(
-                document=file_id
+                document=file_id,
+                caption=caption
             )
 
         # =========================
