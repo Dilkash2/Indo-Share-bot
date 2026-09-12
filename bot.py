@@ -43,21 +43,34 @@ def init_db():
         CREATE TABLE IF NOT EXISTS files (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             code TEXT UNIQUE NOT NULL,
-            file_id TEXT NOT NULL
+            file_id TEXT NOT NULL,
+            file_type TEXT DEFAULT 'document'
         )
     """)
+
+    # Agar purani database hai aur file_type column nahi hai
+    try:
+        cur.execute(
+            "ALTER TABLE files ADD COLUMN file_type TEXT DEFAULT 'document'"
+        )
+    except sqlite3.OperationalError:
+        pass
 
     conn.commit()
     conn.close()
 
 
-def save_file(code, file_id):
+def save_file(code, file_id, file_type):
     conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
 
     cur.execute(
-        "INSERT OR REPLACE INTO files (code, file_id) VALUES (?, ?)",
-        (code, file_id)
+        """
+        INSERT OR REPLACE INTO files
+        (code, file_id, file_type)
+        VALUES (?, ?, ?)
+        """,
+        (code, file_id, file_type)
     )
 
     conn.commit()
@@ -69,7 +82,11 @@ def get_file(code):
     cur = conn.cursor()
 
     cur.execute(
-        "SELECT file_id FROM files WHERE code = ?",
+        """
+        SELECT file_id, file_type
+        FROM files
+        WHERE code = ?
+        """,
         (code,)
     )
 
@@ -77,10 +94,7 @@ def get_file(code):
 
     conn.close()
 
-    if result:
-        return result[0]
-
-    return None
+    return result
 
 
 # =========================
@@ -91,22 +105,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     args = context.args
 
-    # Normal /start
     if not args:
 
         await update.message.reply_text(
             "👋 Welcome to Indo Share Bot!\n\n"
-            "📁 File lene ke liye channel se file link open karein."
+            "📁 Channel se file link open karke file receive karein."
         )
 
         return
 
-    # File link
     code = args[0]
 
-    file_id = get_file(code)
+    file_data = get_file(code)
 
-    if not file_id:
+    if not file_data:
 
         await update.message.reply_text(
             "❌ File nahi mili ya link invalid hai."
@@ -127,7 +139,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
         "📁 File Ready!\n\n"
-        "File lene ke liye verification complete karein.",
+        "Neeche button dabakar verification complete karein.",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -150,8 +162,7 @@ async def upload_command(
         return
 
     await update.message.reply_text(
-        "📤 Ab mujhe file bhejo.\n\n"
-        "Main uska unique link bana dunga."
+        "📤 Ab mujhe file bhejo."
     )
 
 
@@ -168,26 +179,27 @@ async def receive_file(
         return
 
     telegram_file_id = None
+    file_type = None
 
-    # Document
     if update.message.document:
 
         telegram_file_id = update.message.document.file_id
+        file_type = "document"
 
-    # Video
     elif update.message.video:
 
         telegram_file_id = update.message.video.file_id
+        file_type = "video"
 
-    # Audio
     elif update.message.audio:
 
         telegram_file_id = update.message.audio.file_id
+        file_type = "audio"
 
-    # Photo
     elif update.message.photo:
 
         telegram_file_id = update.message.photo[-1].file_id
+        file_type = "photo"
 
     if not telegram_file_id:
 
@@ -197,12 +209,12 @@ async def receive_file(
 
         return
 
-    # Unique code
     code = f"file_{update.message.message_id}"
 
     save_file(
         code,
-        telegram_file_id
+        telegram_file_id,
+        file_type
     )
 
     bot_username = context.bot.username
@@ -217,7 +229,120 @@ async def receive_file(
 
 
 # =========================
-# ADMIN COMMAND
+# WEB APP VERIFICATION
+# =========================
+
+async def web_app_data(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    if not update.effective_message:
+        return
+
+    message = update.effective_message
+
+    if not message.web_app_data:
+        return
+
+    try:
+        import json
+
+        data = json.loads(
+            message.web_app_data.data
+        )
+
+        code = data.get("file")
+
+    except Exception:
+
+        await message.reply_text(
+            "❌ Verification data invalid hai."
+        )
+
+        return
+
+    if not code:
+
+        await message.reply_text(
+            "❌ File code missing hai."
+        )
+
+        return
+
+    file_data = get_file(code)
+
+    if not file_data:
+
+        await message.reply_text(
+            "❌ File nahi mili."
+        )
+
+        return
+
+    file_id, file_type = file_data
+
+    try:
+
+        if file_type == "document":
+
+            sent = await message.reply_document(
+                document=file_id,
+                caption="📥 Your file\n\n"
+                        "⏳ Ye file 90 seconds baad delete ho jayegi."
+            )
+
+        elif file_type == "video":
+
+            sent = await message.reply_video(
+                video=file_id,
+                caption="📥 Your file\n\n"
+                        "⏳ Ye file 90 seconds baad delete ho jayegi."
+            )
+
+        elif file_type == "audio":
+
+            sent = await message.reply_audio(
+                audio=file_id,
+                caption="📥 Your file\n\n"
+                        "⏳ Ye file 90 seconds baad delete ho jayegi."
+            )
+
+        elif file_type == "photo":
+
+            sent = await message.reply_photo(
+                photo=file_id,
+                caption="📥 Your file\n\n"
+                        "⏳ Ye file 90 seconds baad delete ho jayegi."
+            )
+
+        else:
+
+            sent = await message.reply_document(
+                document=file_id
+            )
+
+        # 90 seconds wait
+        await asyncio.sleep(90)
+
+        try:
+            await sent.delete()
+        except Exception:
+            pass
+
+    except Exception as e:
+
+        print(
+            f"File sending error: {e}"
+        )
+
+        await message.reply_text(
+            "❌ File send nahi ho saki."
+        )
+
+
+# =========================
+# ADMIN
 # =========================
 
 async def admin_command(
@@ -230,50 +355,8 @@ async def admin_command(
 
     await update.message.reply_text(
         "👑 ADMIN PANEL\n\n"
-        "/upload - File upload karein\n"
-        "/admin - Admin commands"
-    )
-
-
-# =========================
-# SEND FILE
-# =========================
-
-async def send_file(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    if not context.args:
-        return
-
-    code = context.args[0]
-
-    file_id = get_file(code)
-
-    if not file_id:
-
-        await update.message.reply_text(
-            "❌ File nahi mili."
-        )
-
-        return
-
-    keyboard = [
-        [
-            InlineKeyboardButton(
-                "🚀 Verify & Get File",
-                web_app=WebAppInfo(
-                    url=f"{MINI_APP_URL}?file={code}"
-                )
-            )
-        ]
-    ]
-
-    await update.message.reply_text(
-        "🔐 Verification required.\n\n"
-        "Neeche button dabakar verification complete karein.",
-        reply_markup=InlineKeyboardMarkup(keyboard)
+        "/upload - File upload\n"
+        "/admin - Admin panel"
     )
 
 
@@ -284,13 +367,11 @@ async def send_file(
 def main():
 
     if not BOT_TOKEN:
-
         raise ValueError(
             "BOT_TOKEN environment variable missing hai."
         )
 
     if ADMIN_ID == 0:
-
         raise ValueError(
             "ADMIN_ID environment variable missing hai."
         )
@@ -304,29 +385,25 @@ def main():
         .build()
     )
 
-    # Commands
     app.add_handler(
-        CommandHandler(
-            "start",
-            start
-        )
+        CommandHandler("start", start)
     )
 
     app.add_handler(
-        CommandHandler(
-            "upload",
-            upload_command
-        )
+        CommandHandler("upload", upload_command)
     )
 
     app.add_handler(
-        CommandHandler(
-            "admin",
-            admin_command
+        CommandHandler("admin", admin_command)
+    )
+
+    app.add_handler(
+        MessageHandler(
+            filters.StatusUpdate.WEB_APP_DATA,
+            web_app_data
         )
     )
 
-    # File receiver
     app.add_handler(
         MessageHandler(
             filters.Document.ALL
@@ -343,10 +420,6 @@ def main():
 
     app.run_polling()
 
-
-# =========================
-# RUN
-# =========================
 
 if __name__ == "__main__":
     main()
