@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import asyncio
+import json
 
 from telegram import (
     Update,
@@ -9,6 +10,7 @@ from telegram import (
     WebAppInfo,
     ReplyKeyboardMarkup,
     KeyboardButton,
+    ReplyKeyboardRemove,
 )
 
 from telegram.ext import (
@@ -38,6 +40,7 @@ DB_NAME = "files.db"
 # =========================
 
 def init_db():
+
     conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
 
@@ -50,7 +53,6 @@ def init_db():
         )
     """)
 
-    # Agar purani database hai aur file_type column nahi hai
     try:
         cur.execute(
             "ALTER TABLE files ADD COLUMN file_type TEXT DEFAULT 'document'"
@@ -63,6 +65,7 @@ def init_db():
 
 
 def save_file(code, file_id, file_type):
+
     conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
 
@@ -80,6 +83,7 @@ def save_file(code, file_id, file_type):
 
 
 def get_file(code):
+
     conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
 
@@ -103,10 +107,14 @@ def get_file(code):
 # START
 # =========================
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
 
     args = context.args
 
+    # Normal /start
     if not args:
 
         await update.message.reply_text(
@@ -128,26 +136,30 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return
 
-    keyboard = [
-    [
-        KeyboardButton(
-            "🚀 Verify & Get File",
-            web_app=WebAppInfo(
-                url=f"{MINI_APP_URL}?file={code}"
-            )
-        )
-    ]
-]
+    # IMPORTANT:
+    # sendData() ke liye Web App ko Reply Keyboard se launch kar rahe hain.
 
-reply_markup=reply_markup
-    resize_keyboard=True,
-    one_time_keyboard=True
-)
+    keyboard = [
+        [
+            KeyboardButton(
+                "🚀 Verify & Get File",
+                web_app=WebAppInfo(
+                    url=f"{MINI_APP_URL}?file={code}"
+                )
+            )
+        ]
+    ]
+
+    reply_markup = ReplyKeyboardMarkup(
+        keyboard,
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
 
     await update.message.reply_text(
         "📁 File Ready!\n\n"
         "Neeche button dabakar verification complete karein.",
-        reply_markup=InlineKeyboardMarkup(keyboard)
+        reply_markup=reply_markup
     )
 
 
@@ -169,7 +181,8 @@ async def upload_command(
         return
 
     await update.message.reply_text(
-        "📤 Ab mujhe file bhejo."
+        "📤 Ab mujhe file bhejo.\n\n"
+        "Main uska unique link bana dunga."
     )
 
 
@@ -188,21 +201,25 @@ async def receive_file(
     telegram_file_id = None
     file_type = None
 
+    # Document
     if update.message.document:
 
         telegram_file_id = update.message.document.file_id
         file_type = "document"
 
+    # Video
     elif update.message.video:
 
         telegram_file_id = update.message.video.file_id
         file_type = "video"
 
+    # Audio
     elif update.message.audio:
 
         telegram_file_id = update.message.audio.file_id
         file_type = "audio"
 
+    # Photo
     elif update.message.photo:
 
         telegram_file_id = update.message.photo[-1].file_id
@@ -216,6 +233,7 @@ async def receive_file(
 
         return
 
+    # Unique code
     code = f"file_{update.message.message_id}"
 
     save_file(
@@ -236,7 +254,7 @@ async def receive_file(
 
 
 # =========================
-# WEB APP VERIFICATION
+# WEB APP DATA
 # =========================
 
 async def web_app_data(
@@ -244,16 +262,15 @@ async def web_app_data(
     context: ContextTypes.DEFAULT_TYPE
 ):
 
-    if not update.effective_message:
-        return
-
     message = update.effective_message
+
+    if not message:
+        return
 
     if not message.web_app_data:
         return
 
     try:
-        import json
 
         data = json.loads(
             message.web_app_data.data
@@ -261,7 +278,11 @@ async def web_app_data(
 
         code = data.get("file")
 
-    except Exception:
+    except Exception as e:
+
+        print(
+            f"Web App data error: {e}"
+        )
 
         await message.reply_text(
             "❌ Verification data invalid hai."
@@ -282,7 +303,7 @@ async def web_app_data(
     if not file_data:
 
         await message.reply_text(
-            "❌ File nahi mili."
+            "❌ File nahi mili ya link expire ho gaya."
         )
 
         return
@@ -291,51 +312,93 @@ async def web_app_data(
 
     try:
 
+        # Remove Web App keyboard
+        await message.reply_text(
+            "📥 File bheji ja rahi hai...",
+            reply_markup=ReplyKeyboardRemove()
+        )
+
+        # =========================
+        # SEND DOCUMENT
+        # =========================
+
         if file_type == "document":
 
-            sent = await message.reply_document(
+            sent_message = await message.reply_document(
                 document=file_id,
-                caption="📥 Your file\n\n"
-                        "⏳ Ye file 90 seconds baad delete ho jayegi."
+                caption=(
+                    "📥 Your File\n\n"
+                    "⏳ Ye file 90 seconds baad delete ho jayegi."
+                )
             )
+
+        # =========================
+        # SEND VIDEO
+        # =========================
 
         elif file_type == "video":
 
-            sent = await message.reply_video(
+            sent_message = await message.reply_video(
                 video=file_id,
-                caption="📥 Your file\n\n"
-                        "⏳ Ye file 90 seconds baad delete ho jayegi."
+                caption=(
+                    "📥 Your File\n\n"
+                    "⏳ Ye file 90 seconds baad delete ho jayegi."
+                )
             )
+
+        # =========================
+        # SEND AUDIO
+        # =========================
 
         elif file_type == "audio":
 
-            sent = await message.reply_audio(
+            sent_message = await message.reply_audio(
                 audio=file_id,
-                caption="📥 Your file\n\n"
-                        "⏳ Ye file 90 seconds baad delete ho jayegi."
+                caption=(
+                    "📥 Your File\n\n"
+                    "⏳ Ye file 90 seconds baad delete ho jayegi."
+                )
             )
+
+        # =========================
+        # SEND PHOTO
+        # =========================
 
         elif file_type == "photo":
 
-            sent = await message.reply_photo(
+            sent_message = await message.reply_photo(
                 photo=file_id,
-                caption="📥 Your file\n\n"
-                        "⏳ Ye file 90 seconds baad delete ho jayegi."
+                caption=(
+                    "📥 Your File\n\n"
+                    "⏳ Ye file 90 seconds baad delete ho jayegi."
+                )
             )
 
         else:
 
-            sent = await message.reply_document(
+            sent_message = await message.reply_document(
                 document=file_id
             )
 
-        # 90 seconds wait
+        # =========================
+        # DELETE AFTER 90 SECONDS
+        # =========================
+
         await asyncio.sleep(90)
 
         try:
-            await sent.delete()
-        except Exception:
-            pass
+
+            await sent_message.delete()
+
+            print(
+                f"File message deleted: {code}"
+            )
+
+        except Exception as e:
+
+            print(
+                f"Delete error: {e}"
+            )
 
     except Exception as e:
 
@@ -349,7 +412,7 @@ async def web_app_data(
 
 
 # =========================
-# ADMIN
+# ADMIN COMMAND
 # =========================
 
 async def admin_command(
@@ -362,8 +425,8 @@ async def admin_command(
 
     await update.message.reply_text(
         "👑 ADMIN PANEL\n\n"
-        "/upload - File upload\n"
-        "/admin - Admin panel"
+        "/upload - File upload karein\n"
+        "/admin - Admin commands"
     )
 
 
@@ -374,11 +437,13 @@ async def admin_command(
 def main():
 
     if not BOT_TOKEN:
+
         raise ValueError(
             "BOT_TOKEN environment variable missing hai."
         )
 
     if ADMIN_ID == 0:
+
         raise ValueError(
             "ADMIN_ID environment variable missing hai."
         )
@@ -392,18 +457,31 @@ def main():
         .build()
     )
 
+    # /start
     app.add_handler(
-        CommandHandler("start", start)
+        CommandHandler(
+            "start",
+            start
+        )
     )
 
+    # /upload
     app.add_handler(
-        CommandHandler("upload", upload_command)
+        CommandHandler(
+            "upload",
+            upload_command
+        )
     )
 
+    # /admin
     app.add_handler(
-        CommandHandler("admin", admin_command)
+        CommandHandler(
+            "admin",
+            admin_command
+        )
     )
 
+    # Mini App → Bot
     app.add_handler(
         MessageHandler(
             filters.StatusUpdate.WEB_APP_DATA,
@@ -411,6 +489,7 @@ def main():
         )
     )
 
+    # File receiver
     app.add_handler(
         MessageHandler(
             filters.Document.ALL
@@ -428,5 +507,10 @@ def main():
     app.run_polling()
 
 
+# =========================
+# RUN
+# =========================
+
 if __name__ == "__main__":
+
     main()
