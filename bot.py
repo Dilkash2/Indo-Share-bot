@@ -7,6 +7,8 @@ from telegram import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     WebAppInfo,
+    ReplyKeyboardMarkup,
+    KeyboardButton,
 )
 
 from telegram.ext import (
@@ -127,15 +129,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     keyboard = [
-        [
-            InlineKeyboardButton(
-                "🚀 Verify & Get File",
-                web_app=WebAppInfo(
-                    url=f"{MINI_APP_URL}?file={code}"
-                )
+    [
+        KeyboardButton(
+            "🚀 Verify & Get File",
+            web_app=WebAppInfo(
+                url=f"{MINI_APP_URL}?file={code}"
             )
-        ]
+        )
     ]
+]
+
+reply_markup=reply_markup
+    resize_keyboard=True,
+    one_time_keyboard=True
+)
 
     await update.message.reply_text(
         "📁 File Ready!\n\n"
