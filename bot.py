@@ -1,13 +1,7 @@
 import os
 import sqlite3
 
-from telegram import (
-    Update,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    WebAppInfo,
-)
-
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -15,6 +9,7 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
+from telegram.error import TelegramError
 
 
 # =========================
@@ -35,7 +30,6 @@ DB_NAME = "files.db"
 # =========================
 
 def init_db():
-
     conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
 
@@ -52,7 +46,6 @@ def init_db():
 
 
 def save_file(code, file_id):
-
     conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
 
@@ -66,7 +59,6 @@ def save_file(code, file_id):
 
 
 def get_file(code):
-
     conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
 
@@ -89,52 +81,35 @@ def get_file(code):
 # START
 # =========================
 
-async def start(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if not update.message:
+        return
 
     args = context.args
 
-    # -------------------------
-    # NORMAL /START
-    # -------------------------
-
+    # Normal /start
     if not args:
-
         await update.message.reply_text(
             "👋 Welcome to Indo Share Bot!\n\n"
             "📁 File lene ke liye channel se file link open karein."
         )
-
         return
-
-
-    # -------------------------
-    # FILE LINK
-    # -------------------------
 
     code = args[0]
 
     file_id = get_file(code)
 
     if not file_id:
-
         await update.message.reply_text(
             "❌ File nahi mili ya link invalid hai."
         )
-
         return
-
-
-    # -------------------------
-    # WATCH AD BUTTON
-    # -------------------------
 
     keyboard = [
         [
             InlineKeyboardButton(
-                "📺 Watch Ad & Unlock",
+                "🚀 Verify & Get File",
                 web_app=WebAppInfo(
                     url=f"{MINI_APP_URL}?file={code}"
                 )
@@ -142,10 +117,9 @@ async def start(
         ]
     ]
 
-
     await update.message.reply_text(
-        "🔒 One quick step\n\n"
-        "Watch a short ad to unlock this file,\n"
+        "🔐 One quick step\n\n"
+        "Watch the short ad to unlock this file, "
         "then you'll be brought right back.",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
@@ -160,14 +134,14 @@ async def upload_command(
     context: ContextTypes.DEFAULT_TYPE
 ):
 
-    if update.effective_user.id != ADMIN_ID:
+    if not update.effective_user:
+        return
 
+    if update.effective_user.id != ADMIN_ID:
         await update.message.reply_text(
             "❌ Sirf admin file upload kar sakta hai."
         )
-
         return
-
 
     await update.message.reply_text(
         "📤 Ab mujhe file bhejo.\n\n"
@@ -184,60 +158,42 @@ async def receive_file(
     context: ContextTypes.DEFAULT_TYPE
 ):
 
+    if not update.effective_user:
+        return
+
     if update.effective_user.id != ADMIN_ID:
         return
 
+    if not update.message:
+        return
 
     telegram_file_id = None
 
-
-    # Document
     if update.message.document:
-
         telegram_file_id = update.message.document.file_id
 
-
-    # Video
     elif update.message.video:
-
         telegram_file_id = update.message.video.file_id
 
-
-    # Audio
     elif update.message.audio:
-
         telegram_file_id = update.message.audio.file_id
 
-
-    # Photo
     elif update.message.photo:
-
         telegram_file_id = update.message.photo[-1].file_id
 
-
     if not telegram_file_id:
-
         await update.message.reply_text(
             "❌ Ye file type supported nahi hai."
         )
-
         return
 
-
-    # Unique file code
     code = f"file_{update.message.message_id}"
 
-
-    save_file(
-        code,
-        telegram_file_id
-    )
-
+    save_file(code, telegram_file_id)
 
     bot_username = context.bot.username
 
     link = f"https://t.me/{bot_username}?start={code}"
-
 
     await update.message.reply_text(
         "✅ FILE SAVED SUCCESSFULLY!\n\n"
@@ -255,55 +211,90 @@ async def web_app_data(
     context: ContextTypes.DEFAULT_TYPE
 ):
 
-    if not update.message.web_app_data:
+    if not update.message:
         return
 
+    data = update.message.web_app_data.data
 
-    code = update.message.web_app_data.data
+    code = data.strip()
+
+    if not code:
+        await update.message.reply_text(
+            "❌ File code nahi mila."
+        )
+        return
 
     file_id = get_file(code)
 
-
     if not file_id:
-
         await update.message.reply_text(
-            "❌ File nahi mili ya link expire ho gaya."
+            "❌ File nahi mili."
         )
-
         return
 
+    await update.message.reply_text(
+        "📤 File sending..."
+    )
 
-    # -------------------------
-    # SEND FILE TO USER
-    # -------------------------
+    user_id = update.effective_user.id
 
+    # Try different Telegram file types
+    sent = False
+
+    # Document
     try:
-
-        await update.message.reply_text(
-            "📤 File sending..."
-        )
-
-
         await context.bot.send_document(
-            chat_id=update.effective_chat.id,
-            document=file_id,
-            caption=(
-                "✅ File Ready!\n\n"
-                "⚠️ Ye file limited time ke liye available hai.\n"
-                "📌 Isliye file ko apne Saved Messages "
-                "mein forward/save kar lena."
+            chat_id=user_id,
+            document=file_id
+        )
+        sent = True
+    except TelegramError:
+        pass
+
+    # Video
+    if not sent:
+        try:
+            await context.bot.send_video(
+                chat_id=user_id,
+                video=file_id
             )
-        )
+            sent = True
+        except TelegramError:
+            pass
 
+    # Audio
+    if not sent:
+        try:
+            await context.bot.send_audio(
+                chat_id=user_id,
+                audio=file_id
+            )
+            sent = True
+        except TelegramError:
+            pass
 
-    except Exception as e:
+    # Photo
+    if not sent:
+        try:
+            await context.bot.send_photo(
+                chat_id=user_id,
+                photo=file_id
+            )
+            sent = True
+        except TelegramError:
+            pass
 
-        print("FILE SEND ERROR:", e)
-
+    if not sent:
         await update.message.reply_text(
-            "❌ File send nahi ho paayi.\n"
-            "Please dobara try karein."
+            "❌ File send nahi ho paayi.\n\n"
+            "File ko dobara /upload se upload karke try karein."
         )
+        return
+
+    await update.message.reply_text(
+        "✅ File successfully sent!\n\n"
+        "⚠️ File ko apne Saved Messages mein forward/save kar lena."
+    )
 
 
 # =========================
@@ -315,9 +306,11 @@ async def admin_command(
     context: ContextTypes.DEFAULT_TYPE
 ):
 
-    if update.effective_user.id != ADMIN_ID:
+    if not update.effective_user:
         return
 
+    if update.effective_user.id != ADMIN_ID:
+        return
 
     await update.message.reply_text(
         "👑 ADMIN PANEL\n\n"
@@ -333,21 +326,16 @@ async def admin_command(
 def main():
 
     if not BOT_TOKEN:
-
         raise ValueError(
             "BOT_TOKEN environment variable missing hai."
         )
 
-
     if ADMIN_ID == 0:
-
         raise ValueError(
             "ADMIN_ID environment variable missing hai."
         )
 
-
     init_db()
-
 
     app = (
         Application
@@ -356,44 +344,20 @@ def main():
         .build()
     )
 
-
-    # /start
+    # Commands
     app.add_handler(
-        CommandHandler(
-            "start",
-            start
-        )
+        CommandHandler("start", start)
     )
 
-
-    # /upload
     app.add_handler(
-        CommandHandler(
-            "upload",
-            upload_command
-        )
+        CommandHandler("upload", upload_command)
     )
 
-
-    # /admin
     app.add_handler(
-        CommandHandler(
-            "admin",
-            admin_command
-        )
+        CommandHandler("admin", admin_command)
     )
 
-
-    # Telegram Mini App se data receive
-    app.add_handler(
-        MessageHandler(
-            filters.StatusUpdate.WEB_APP_DATA,
-            web_app_data
-        )
-    )
-
-
-    # Files receive
+    # File receiver
     app.add_handler(
         MessageHandler(
             filters.Document.ALL
@@ -404,18 +368,19 @@ def main():
         )
     )
 
-
-    print(
-        "🤖 Indo Share Bot Started..."
+    # IMPORTANT:
+    # Mini App se aane wala data
+    app.add_handler(
+        MessageHandler(
+            filters.StatusUpdate.WEB_APP_DATA,
+            web_app_data
+        )
     )
 
+    print("🤖 Indo Share Bot Started...")
 
     app.run_polling()
 
-
-# =========================
-# RUN
-# =========================
 
 if __name__ == "__main__":
     main()
