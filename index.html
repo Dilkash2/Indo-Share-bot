@@ -1,386 +1,471 @@
-import os
-import sqlite3
-
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    MessageHandler,
-    ContextTypes,
-    filters,
-)
-from telegram.error import TelegramError
-
-
-# =========================
-# SETTINGS
-# =========================
-
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-
-MINI_APP_URL = "https://dilkash2.github.io/Indo-Share-bot/"
-
-ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
-
-DB_NAME = "files.db"
-
-
-# =========================
-# DATABASE
-# =========================
-
-def init_db():
-    conn = sqlite3.connect(DB_NAME)
-    cur = conn.cursor()
-
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS files (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            code TEXT UNIQUE NOT NULL,
-            file_id TEXT NOT NULL
-        )
-    """)
-
-    conn.commit()
-    conn.close()
-
-
-def save_file(code, file_id):
-    conn = sqlite3.connect(DB_NAME)
-    cur = conn.cursor()
-
-    cur.execute(
-        "INSERT OR REPLACE INTO files (code, file_id) VALUES (?, ?)",
-        (code, file_id)
-    )
-
-    conn.commit()
-    conn.close()
-
-
-def get_file(code):
-    conn = sqlite3.connect(DB_NAME)
-    cur = conn.cursor()
-
-    cur.execute(
-        "SELECT file_id FROM files WHERE code = ?",
-        (code,)
-    )
-
-    result = cur.fetchone()
-
-    conn.close()
-
-    if result:
-        return result[0]
-
-    return None
-
-
-# =========================
-# START
-# =========================
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    if not update.message:
-        return
-
-    args = context.args
-
-    # Normal /start
-    if not args:
-        await update.message.reply_text(
-            "👋 Welcome to Indo Share Bot!\n\n"
-            "📁 File lene ke liye channel se file link open karein."
-        )
-        return
-
-    code = args[0]
-
-    file_id = get_file(code)
-
-    if not file_id:
-        await update.message.reply_text(
-            "❌ File nahi mili ya link invalid hai."
-        )
-        return
-
-    keyboard = [
-        [
-            InlineKeyboardButton(
-                "🚀 Verify & Get File",
-                web_app=WebAppInfo(
-                    url=f"{MINI_APP_URL}?file={code}"
-                )
-            )
-        ]
-    ]
-
-    await update.message.reply_text(
-        "🔐 One quick step\n\n"
-        "Watch the short ad to unlock this file, "
-        "then you'll be brought right back.",
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
-
-
-# =========================
-# UPLOAD COMMAND
-# =========================
-
-async def upload_command(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    if not update.effective_user:
-        return
-
-    if update.effective_user.id != ADMIN_ID:
-        await update.message.reply_text(
-            "❌ Sirf admin file upload kar sakta hai."
-        )
-        return
-
-    await update.message.reply_text(
-        "📤 Ab mujhe file bhejo.\n\n"
-        "Main uska unique link bana dunga."
-    )
-
-
-# =========================
-# RECEIVE FILE
-# =========================
-
-async def receive_file(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    if not update.effective_user:
-        return
-
-    if update.effective_user.id != ADMIN_ID:
-        return
-
-    if not update.message:
-        return
-
-    telegram_file_id = None
-
-    if update.message.document:
-        telegram_file_id = update.message.document.file_id
-
-    elif update.message.video:
-        telegram_file_id = update.message.video.file_id
-
-    elif update.message.audio:
-        telegram_file_id = update.message.audio.file_id
-
-    elif update.message.photo:
-        telegram_file_id = update.message.photo[-1].file_id
-
-    if not telegram_file_id:
-        await update.message.reply_text(
-            "❌ Ye file type supported nahi hai."
-        )
-        return
-
-    code = f"file_{update.message.message_id}"
-
-    save_file(code, telegram_file_id)
-
-    bot_username = context.bot.username
-
-    link = f"https://t.me/{bot_username}?start={code}"
-
-    await update.message.reply_text(
-        "✅ FILE SAVED SUCCESSFULLY!\n\n"
-        f"🔗 File Link:\n{link}\n\n"
-        "Is link ko Telegram channel mein post kar sakte ho."
-    )
-
-
-# =========================
-# WEB APP DATA
-# =========================
-
-async def web_app_data(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    if not update.message:
-        return
-
-    data = update.message.web_app_data.data
-
-    code = data.strip()
-
-    if not code:
-        await update.message.reply_text(
-            "❌ File code nahi mila."
-        )
-        return
-
-    file_id = get_file(code)
-
-    if not file_id:
-        await update.message.reply_text(
-            "❌ File nahi mili."
-        )
-        return
-
-    await update.message.reply_text(
-        "📤 File sending..."
-    )
-
-    user_id = update.effective_user.id
-
-    # Try different Telegram file types
-    sent = False
-
-    # Document
-    try:
-        await context.bot.send_document(
-            chat_id=user_id,
-            document=file_id
-        )
-        sent = True
-    except TelegramError:
-        pass
-
-    # Video
-    if not sent:
-        try:
-            await context.bot.send_video(
-                chat_id=user_id,
-                video=file_id
-            )
-            sent = True
-        except TelegramError:
-            pass
-
-    # Audio
-    if not sent:
-        try:
-            await context.bot.send_audio(
-                chat_id=user_id,
-                audio=file_id
-            )
-            sent = True
-        except TelegramError:
-            pass
-
-    # Photo
-    if not sent:
-        try:
-            await context.bot.send_photo(
-                chat_id=user_id,
-                photo=file_id
-            )
-            sent = True
-        except TelegramError:
-            pass
-
-    if not sent:
-        await update.message.reply_text(
-            "❌ File send nahi ho paayi.\n\n"
-            "File ko dobara /upload se upload karke try karein."
-        )
-        return
-
-    await update.message.reply_text(
-        "✅ File successfully sent!\n\n"
-        "⚠️ File ko apne Saved Messages mein forward/save kar lena."
-    )
-
-
-# =========================
-# ADMIN COMMAND
-# =========================
-
-async def admin_command(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    if not update.effective_user:
-        return
-
-    if update.effective_user.id != ADMIN_ID:
-        return
-
-    await update.message.reply_text(
-        "👑 ADMIN PANEL\n\n"
-        "/upload - File upload karein\n"
-        "/admin - Admin commands"
-    )
-
-
-# =========================
-# MAIN
-# =========================
-
-def main():
-
-    if not BOT_TOKEN:
-        raise ValueError(
-            "BOT_TOKEN environment variable missing hai."
-        )
-
-    if ADMIN_ID == 0:
-        raise ValueError(
-            "ADMIN_ID environment variable missing hai."
-        )
-
-    init_db()
-
-    app = (
-        Application
-        .builder()
-        .token(BOT_TOKEN)
-        .build()
-    )
-
-    # Commands
-    app.add_handler(
-        CommandHandler("start", start)
-    )
-
-    app.add_handler(
-        CommandHandler("upload", upload_command)
-    )
-
-    app.add_handler(
-        CommandHandler("admin", admin_command)
-    )
-
-    # File receiver
-    app.add_handler(
-        MessageHandler(
-            filters.Document.ALL
-            | filters.VIDEO
-            | filters.AUDIO
-            | filters.PHOTO,
-            receive_file
-        )
-    )
-
-    # IMPORTANT:
-    # Mini App se aane wala data
-    app.add_handler(
-        MessageHandler(
-            filters.StatusUpdate.WEB_APP_DATA,
-            web_app_data
-        )
-    )
-
-    print("🤖 Indo Share Bot Started...")
-
-    app.run_polling()
-
-
-if __name__ == "__main__":
-    main()
+<!DOCTYPE html>  <html lang="en">  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>File Verification</title>  <script src="https://telegram.org/js/telegram-web-app.js"></script>  <style>  
+* {  
+    box-sizing: border-box;  
+    margin: 0;  
+    padding: 0;  
+}  
+  
+body {  
+    font-family: Arial, sans-serif;  
+    background: #f3f6f8;  
+    color: #222;  
+}  
+  
+.header {  
+    background: #16a34a;  
+    color: white;  
+    padding: 22px 18px;  
+    text-align: center;  
+    border-radius: 0 0 22px 22px;  
+}  
+  
+.header h1 {  
+    font-size: 23px;  
+}  
+  
+.header p {  
+    margin-top: 6px;  
+    font-size: 14px;  
+    opacity: .9;  
+}  
+  
+.container {  
+    padding: 18px;  
+    max-width: 500px;  
+    margin: auto;  
+}  
+  
+.card {  
+    background: white;  
+    border-radius: 18px;  
+    padding: 20px;  
+    margin-bottom: 16px;  
+    box-shadow: 0 4px 18px rgba(0,0,0,.08);  
+}  
+  
+.title {  
+    font-size: 20px;  
+    font-weight: bold;  
+    margin-bottom: 8px;  
+}  
+  
+.subtitle {  
+    color: #777;  
+    font-size: 14px;  
+    line-height: 1.5;  
+}  
+  
+.timer {  
+    text-align: center;  
+    font-size: 38px;  
+    font-weight: bold;  
+    color: #16a34a;  
+    margin: 15px 0;  
+}  
+  
+.ad-box {  
+    height: 220px;  
+    border: 2px dashed #bbb;  
+    border-radius: 14px;  
+    display: flex;  
+    align-items: center;  
+    justify-content: center;  
+    text-align: center;  
+    background: #fafafa;  
+    margin: 15px 0;  
+}  
+  
+.ad-text {  
+    color: #777;  
+}  
+  
+.ad-timer {  
+    text-align: center;  
+    font-size: 17px;  
+    margin-bottom: 15px;  
+    font-weight: bold;  
+}  
+  
+button {  
+    width: 100%;  
+    border: none;  
+    padding: 15px;  
+    border-radius: 12px;  
+    font-size: 16px;  
+    font-weight: bold;  
+    cursor: pointer;  
+    margin-top: 10px;  
+}  
+  
+.verify-btn {  
+    background: #16a34a;  
+    color: white;  
+}  
+  
+.back-btn {  
+    background: #e5e7eb;  
+    color: #222;  
+}  
+  
+.file-btn {  
+    background: #2563eb;  
+    color: white;  
+}  
+  
+button:disabled {  
+    background: #cbd5e1;  
+    cursor: not-allowed;  
+}  
+  
+.step {  
+    display: none;  
+}  
+  
+.step.active {  
+    display: block;  
+}  
+  
+.success {  
+    text-align: center;  
+    padding: 25px 10px;  
+}  
+  
+.success-icon {  
+    font-size: 60px;  
+    margin-bottom: 12px;  
+}  
+  
+.expired {  
+    color: #dc2626;  
+    text-align: center;  
+    font-weight: bold;  
+}  
+  
+.footer {  
+    text-align: center;  
+    color: #888;  
+    font-size: 12px;  
+    margin-top: 20px;  
+}  
+</style>  </head>  <body>  <div class="header">  
+    <h1>📁 FILE BOT</h1>  
+    <p>Secure File Verification</p>  
+</div>  <div class="container">  <!-- STEP 1 -->  
+<div id="step1" class="step active">  
+
+    <div class="card">  
+
+        <div class="title">  
+            🔐 Verification  
+        </div>  
+
+        <div class="subtitle">  
+            Complete the verification process to continue.  
+        </div>  
+
+        <div class="timer" id="mainTimer">  
+            05:00  
+        </div>  
+
+        <div class="ad-box">  
+            <div class="ad-text">  
+                📢 Advertisement  
+                <br><br>  
+                <small>Advertisement will appear here</small>  
+            </div>  
+        </div>  
+
+        <div class="ad-timer" id="adTimer">  
+            Advertisement: 20s  
+        </div>  
+
+        <button  
+            class="verify-btn"  
+            id="verifyBtn"  
+            disabled>  
+            ⏳ WAIT...  
+        </button>  
+
+    </div>  
+
+</div>  
+
+
+<!-- STEP 2 -->  
+<div id="step2" class="step">  
+
+    <div class="card">  
+
+        <div class="title">  
+            ↩️ Verification  
+        </div>  
+
+        <div class="subtitle">  
+            Advertisement step completed.  
+            Continue verification.  
+        </div>  
+
+        <button  
+            class="back-btn"  
+            onclick="goBack()">  
+            ↩️ BACK  
+        </button>  
+
+        <button  
+            class="verify-btn"  
+            onclick="completeVerification()">  
+            ✅ VERIFY & CONTINUE  
+        </button>  
+
+    </div>  
+
+</div>  
+
+
+<!-- STEP 3 -->  
+<div id="step3" class="step">  
+
+    <div class="card success">  
+
+        <div class="success-icon">  
+            ✅  
+        </div>  
+
+        <div class="title">  
+            Verification Complete  
+        </div>  
+
+        <p class="subtitle">  
+            Your verification has been completed successfully.  
+        </p>  
+
+        <button  
+            class="file-btn"  
+            onclick="getFile()">  
+            📥 GET FILE  
+        </button>  
+
+    </div>  
+
+</div>  
+
+
+<!-- EXPIRED -->  
+<div id="expired" class="step">  
+
+    <div class="card expired">  
+
+        <h2>  
+            ⛔ Verification Expired  
+        </h2>  
+
+        <p style="margin-top:10px;">  
+            Please start the verification again.  
+        </p>  
+
+        <button  
+            class="verify-btn"  
+            onclick="location.reload()">  
+            🔄 TRY AGAIN  
+        </button>  
+
+    </div>  
+
+</div>  
+
+
+<div class="footer">  
+    File Bot • Secure Verification  
+</div>
+
+</div>  <script>  
+  
+/* =====================================  
+   TELEGRAM MINI APP  
+===================================== */  
+  
+const tg = window.Telegram.WebApp;  
+  
+tg.ready();  
+tg.expand();  
+  
+  
+/* =====================================  
+   GET FILE CODE FROM URL  
+===================================== */  
+  
+const urlParams = new URLSearchParams(  
+    window.location.search  
+);  
+  
+const fileCode = urlParams.get("file");  
+  
+  
+/* =====================================  
+   MAIN 5 MINUTE TIMER  
+===================================== */  
+  
+let mainSeconds = 300;  
+  
+const mainTimer = setInterval(function () {  
+  
+    const minutes = Math.floor(mainSeconds / 60);  
+    const seconds = mainSeconds % 60;  
+  
+    document.getElementById("mainTimer").innerText =  
+        String(minutes).padStart(2, "0") +  
+        ":" +  
+        String(seconds).padStart(2, "0");  
+  
+  
+    if (mainSeconds <= 0) {  
+  
+        clearInterval(mainTimer);  
+  
+        clearInterval(adTimer);  
+  
+        document  
+            .querySelectorAll(".step")  
+            .forEach(function(step) {  
+                step.classList.remove("active");  
+            });  
+  
+        document  
+            .getElementById("expired")  
+            .classList.add("active");  
+  
+        return;  
+    }  
+  
+    mainSeconds--;  
+  
+}, 1000);  
+  
+  
+/* =====================================  
+   AD 20 SECOND TIMER  
+===================================== */  
+  
+let adSeconds = 20;  
+  
+const adTimer = setInterval(function () {  
+  
+    document.getElementById("adTimer").innerText =  
+        "Advertisement: " + adSeconds + "s";  
+  
+  
+    if (adSeconds <= 0) {  
+  
+        clearInterval(adTimer);  
+  
+        document.getElementById("adTimer").innerText =  
+            "✅ Advertisement step completed";  
+  
+  
+        const btn =  
+            document.getElementById("verifyBtn");  
+  
+        btn.disabled = false;  
+  
+        btn.innerText =  
+            "✅ CONTINUE";  
+  
+  
+        btn.onclick = function () {  
+  
+            showStep(2);  
+  
+        };  
+  
+        return;  
+    }  
+  
+    adSeconds--;  
+  
+}, 1000);  
+  
+  
+/* =====================================  
+   SHOW STEP  
+===================================== */  
+  
+function showStep(number) {  
+  
+    document  
+        .querySelectorAll(".step")  
+        .forEach(function(step) {  
+  
+            step.classList.remove("active");  
+  
+        });  
+  
+  
+    document  
+        .getElementById("step" + number)  
+        .classList.add("active");  
+}  
+  
+  
+/* =====================================  
+   BACK  
+===================================== */  
+  
+function goBack() {  
+  
+    showStep(1);  
+  
+}  
+  
+  
+/* =====================================  
+   COMPLETE VERIFICATION  
+===================================== */  
+  
+function completeVerification() {  
+  
+    showStep(3);  
+  
+}  
+  
+  
+/* =====================================  
+   GET FILE  
+===================================== */  
+  
+function getFile() {  
+  
+    if (!fileCode) {  
+  
+        alert(  
+            "❌ File code nahi mila."  
+        );  
+  
+        return;  
+    }  
+  
+  
+    /*  
+       Telegram Mini App se  
+       file code Bot ko bhejna  
+    */  
+  
+    tg.sendData(fileCode);  
+  
+  
+    /*  
+       Telegram Mini App close  
+    */  
+  
+    setTimeout(function () {  
+  
+        tg.close();  
+  
+    }, 500);  
+  
+}  
+  
+</script>  </body>  
+            </html>
