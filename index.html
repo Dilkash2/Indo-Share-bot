@@ -1,471 +1,369 @@
-<!DOCTYPE html>  <html lang="en">  
-<head>  
-<meta charset="UTF-8">  
-<meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>File Verification</title>  <script src="https://telegram.org/js/telegram-web-app.js"></script>  <style>  
-* {  
-    box-sizing: border-box;  
-    margin: 0;  
-    padding: 0;  
-}  
-  
-body {  
-    font-family: Arial, sans-serif;  
-    background: #f3f6f8;  
-    color: #222;  
-}  
-  
-.header {  
-    background: #16a34a;  
-    color: white;  
-    padding: 22px 18px;  
-    text-align: center;  
-    border-radius: 0 0 22px 22px;  
-}  
-  
-.header h1 {  
-    font-size: 23px;  
-}  
-  
-.header p {  
-    margin-top: 6px;  
-    font-size: 14px;  
-    opacity: .9;  
-}  
-  
-.container {  
-    padding: 18px;  
-    max-width: 500px;  
-    margin: auto;  
-}  
-  
-.card {  
-    background: white;  
-    border-radius: 18px;  
-    padding: 20px;  
-    margin-bottom: 16px;  
-    box-shadow: 0 4px 18px rgba(0,0,0,.08);  
-}  
-  
-.title {  
-    font-size: 20px;  
-    font-weight: bold;  
-    margin-bottom: 8px;  
-}  
-  
-.subtitle {  
-    color: #777;  
-    font-size: 14px;  
-    line-height: 1.5;  
-}  
-  
-.timer {  
-    text-align: center;  
-    font-size: 38px;  
-    font-weight: bold;  
-    color: #16a34a;  
-    margin: 15px 0;  
-}  
-  
-.ad-box {  
-    height: 220px;  
-    border: 2px dashed #bbb;  
-    border-radius: 14px;  
-    display: flex;  
-    align-items: center;  
-    justify-content: center;  
-    text-align: center;  
-    background: #fafafa;  
-    margin: 15px 0;  
-}  
-  
-.ad-text {  
-    color: #777;  
-}  
-  
-.ad-timer {  
-    text-align: center;  
-    font-size: 17px;  
-    margin-bottom: 15px;  
-    font-weight: bold;  
-}  
-  
-button {  
-    width: 100%;  
-    border: none;  
-    padding: 15px;  
-    border-radius: 12px;  
-    font-size: 16px;  
-    font-weight: bold;  
-    cursor: pointer;  
-    margin-top: 10px;  
-}  
-  
-.verify-btn {  
-    background: #16a34a;  
-    color: white;  
-}  
-  
-.back-btn {  
-    background: #e5e7eb;  
-    color: #222;  
-}  
-  
-.file-btn {  
-    background: #2563eb;  
-    color: white;  
-}  
-  
-button:disabled {  
-    background: #cbd5e1;  
-    cursor: not-allowed;  
-}  
-  
-.step {  
-    display: none;  
-}  
-  
-.step.active {  
-    display: block;  
-}  
-  
-.success {  
-    text-align: center;  
-    padding: 25px 10px;  
-}  
-  
-.success-icon {  
-    font-size: 60px;  
-    margin-bottom: 12px;  
-}  
-  
-.expired {  
-    color: #dc2626;  
-    text-align: center;  
-    font-weight: bold;  
-}  
-  
-.footer {  
-    text-align: center;  
-    color: #888;  
-    font-size: 12px;  
-    margin-top: 20px;  
-}  
-</style>  </head>  <body>  <div class="header">  
-    <h1>📁 FILE BOT</h1>  
-    <p>Secure File Verification</p>  
-</div>  <div class="container">  <!-- STEP 1 -->  
-<div id="step1" class="step active">  
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <div class="card">  
+    <title>File Verification</title>
 
-        <div class="title">  
-            🔐 Verification  
-        </div>  
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-        <div class="subtitle">  
-            Complete the verification process to continue.  
-        </div>  
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-        <div class="timer" id="mainTimer">  
-            05:00  
-        </div>  
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
+            color: #111827;
+        }
 
-        <div class="ad-box">  
-            <div class="ad-text">  
-                📢 Advertisement  
-                <br><br>  
-                <small>Advertisement will appear here</small>  
-            </div>  
-        </div>  
+        .header {
+            background: #16a34a;
+            color: white;
+            padding: 18px;
+            text-align: center;
+            font-size: 21px;
+            font-weight: bold;
+        }
 
-        <div class="ad-timer" id="adTimer">  
-            Advertisement: 20s  
-        </div>  
+        .container {
+            padding: 20px;
+        }
 
-        <button  
-            class="verify-btn"  
-            id="verifyBtn"  
-            disabled>  
-            ⏳ WAIT...  
-        </button>  
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
 
-    </div>  
+        .title {
+            font-size: 22px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 8px;
+        }
 
-</div>  
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
 
+        .steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 22px;
+        }
 
-<!-- STEP 2 -->  
-<div id="step2" class="step">  
+        .step {
+            text-align: center;
+            font-size: 12px;
+            color: #9ca3af;
+            flex: 1;
+        }
 
-    <div class="card">  
+        .circle {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            margin: 0 auto 6px;
+            background: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
 
-        <div class="title">  
-            ↩️ Verification  
-        </div>  
+        .active .circle,
+        .done .circle {
+            background: #16a34a;
+            color: white;
+        }
 
-        <div class="subtitle">  
-            Advertisement step completed.  
-            Continue verification.  
-        </div>  
+        .active,
+        .done {
+            color: #16a34a;
+        }
 
-        <button  
-            class="back-btn"  
-            onclick="goBack()">  
-            ↩️ BACK  
-        </button>  
+        .timer {
+            text-align: center;
+            font-size: 14px;
+            color: #dc2626;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
 
-        <button  
-            class="verify-btn"  
-            onclick="completeVerification()">  
-            ✅ VERIFY & CONTINUE  
-        </button>  
+        .ad-box {
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 28px 10px;
+            text-align: center;
+            margin-bottom: 18px;
+            color: #6b7280;
+        }
 
-    </div>  
+        .ad-title {
+            font-weight: bold;
+            color: #111827;
+            margin-bottom: 8px;
+        }
 
-</div>  
+        button {
+            width: 100%;
+            border: none;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 17px;
+            font-weight: bold;
+            background: #16a34a;
+            color: white;
+            cursor: pointer;
+        }
 
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
 
-<!-- STEP 3 -->  
-<div id="step3" class="step">  
+        .success {
+            display: none;
+            text-align: center;
+        }
 
-    <div class="card success">  
+        .success-icon {
+            font-size: 55px;
+            margin-bottom: 10px;
+        }
 
-        <div class="success-icon">  
-            ✅  
-        </div>  
+        .small {
+            text-align: center;
+            color: #6b7280;
+            font-size: 12px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
 
-        <div class="title">  
-            Verification Complete  
-        </div>  
+<body>
 
-        <p class="subtitle">  
-            Your verification has been completed successfully.  
-        </p>  
-
-        <button  
-            class="file-btn"  
-            onclick="getFile()">  
-            📥 GET FILE  
-        </button>  
-
-    </div>  
-
-</div>  
-
-
-<!-- EXPIRED -->  
-<div id="expired" class="step">  
-
-    <div class="card expired">  
-
-        <h2>  
-            ⛔ Verification Expired  
-        </h2>  
-
-        <p style="margin-top:10px;">  
-            Please start the verification again.  
-        </p>  
-
-        <button  
-            class="verify-btn"  
-            onclick="location.reload()">  
-            🔄 TRY AGAIN  
-        </button>  
-
-    </div>  
-
-</div>  
-
-
-<div class="footer">  
-    File Bot • Secure Verification  
+<div class="header">
+    📁 FILE BOT
 </div>
 
-</div>  <script>  
-  
-/* =====================================  
-   TELEGRAM MINI APP  
-===================================== */  
-  
-const tg = window.Telegram.WebApp;  
-  
-tg.ready();  
-tg.expand();  
-  
-  
-/* =====================================  
-   GET FILE CODE FROM URL  
-===================================== */  
-  
-const urlParams = new URLSearchParams(  
-    window.location.search  
-);  
-  
-const fileCode = urlParams.get("file");  
-  
-  
-/* =====================================  
-   MAIN 5 MINUTE TIMER  
-===================================== */  
-  
-let mainSeconds = 300;  
-  
-const mainTimer = setInterval(function () {  
-  
-    const minutes = Math.floor(mainSeconds / 60);  
-    const seconds = mainSeconds % 60;  
-  
-    document.getElementById("mainTimer").innerText =  
-        String(minutes).padStart(2, "0") +  
-        ":" +  
-        String(seconds).padStart(2, "0");  
-  
-  
-    if (mainSeconds <= 0) {  
-  
-        clearInterval(mainTimer);  
-  
-        clearInterval(adTimer);  
-  
-        document  
-            .querySelectorAll(".step")  
-            .forEach(function(step) {  
-                step.classList.remove("active");  
-            });  
-  
-        document  
-            .getElementById("expired")  
-            .classList.add("active");  
-  
-        return;  
-    }  
-  
-    mainSeconds--;  
-  
-}, 1000);  
-  
-  
-/* =====================================  
-   AD 20 SECOND TIMER  
-===================================== */  
-  
-let adSeconds = 20;  
-  
-const adTimer = setInterval(function () {  
-  
-    document.getElementById("adTimer").innerText =  
-        "Advertisement: " + adSeconds + "s";  
-  
-  
-    if (adSeconds <= 0) {  
-  
-        clearInterval(adTimer);  
-  
-        document.getElementById("adTimer").innerText =  
-            "✅ Advertisement step completed";  
-  
-  
-        const btn =  
-            document.getElementById("verifyBtn");  
-  
-        btn.disabled = false;  
-  
-        btn.innerText =  
-            "✅ CONTINUE";  
-  
-  
-        btn.onclick = function () {  
-  
-            showStep(2);  
-  
-        };  
-  
-        return;  
-    }  
-  
-    adSeconds--;  
-  
-}, 1000);  
-  
-  
-/* =====================================  
-   SHOW STEP  
-===================================== */  
-  
-function showStep(number) {  
-  
-    document  
-        .querySelectorAll(".step")  
-        .forEach(function(step) {  
-  
-            step.classList.remove("active");  
-  
-        });  
-  
-  
-    document  
-        .getElementById("step" + number)  
-        .classList.add("active");  
-}  
-  
-  
-/* =====================================  
-   BACK  
-===================================== */  
-  
-function goBack() {  
-  
-    showStep(1);  
-  
-}  
-  
-  
-/* =====================================  
-   COMPLETE VERIFICATION  
-===================================== */  
-  
-function completeVerification() {  
-  
-    showStep(3);  
-  
-}  
-  
-  
-/* =====================================  
-   GET FILE  
-===================================== */  
-  
-function getFile() {  
-  
-    if (!fileCode) {  
-  
-        alert(  
-            "❌ File code nahi mila."  
-        );  
-  
-        return;  
-    }  
-  
-  
-    /*  
-       Telegram Mini App se  
-       file code Bot ko bhejna  
-    */  
-  
-    tg.sendData(fileCode);  
-  
-  
-    /*  
-       Telegram Mini App close  
-    */  
-  
-    setTimeout(function () {  
-  
-        tg.close();  
-  
-    }, 500);  
-  
-}  
-  
-</script>  </body>  
+<div class="container">
+
+    <div class="card">
+
+        <div class="title">
+            File Verification
+        </div>
+
+        <div class="subtitle">
+            Complete the verification to unlock your file.
+        </div>
+
+        <div class="steps">
+
+            <div class="step active" id="step1">
+                <div class="circle">1</div>
+                Watch
+            </div>
+
+            <div class="step" id="step2">
+                <div class="circle">2</div>
+                Verify
+            </div>
+
+            <div class="step" id="step3">
+                <div class="circle">3</div>
+                Done
+            </div>
+
+        </div>
+
+        <div class="timer">
+            Expires in <span id="mainTimer">5:00</span>
+        </div>
+
+        <div id="verification">
+
+            <div class="ad-box">
+                <div class="ad-title">
+                    👀 Watch & Verify
+                </div>
+
+                <div>
+                    Please wait while the verification timer completes.
+                </div>
+
+                <br>
+
+                <div>
+                    Ad timer:
+                    <strong id="adTimer">20</strong>s
+                </div>
+            </div>
+
+            <button id="continueBtn" disabled>
+                Please wait...
+            </button>
+
+        </div>
+
+        <div class="success" id="success">
+
+            <div class="success-icon">
+                ✅
+            </div>
+
+            <div class="title">
+                Verification Complete
+            </div>
+
+            <div class="subtitle">
+                Your file is ready.
+            </div>
+
+            <button id="getFileBtn">
+                📥 GET FILE
+            </button>
+
+        </div>
+
+        <div class="small">
+            Do not close this page during verification.
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+const tg = window.Telegram.WebApp;
+
+tg.ready();
+tg.expand();
+
+const params = new URLSearchParams(window.location.search);
+
+const fileCode = params.get("file");
+
+let mainSeconds = 300;
+let adSeconds = 20;
+
+const mainTimer = document.getElementById("mainTimer");
+const adTimer = document.getElementById("adTimer");
+const continueBtn = document.getElementById("continueBtn");
+const verification = document.getElementById("verification");
+const success = document.getElementById("success");
+
+const step1 = document.getElementById("step1");
+const step2 = document.getElementById("step2");
+const step3 = document.getElementById("step3");
+
+
+// =========================
+// MAIN 5 MINUTE TIMER
+// =========================
+
+const mainInterval = setInterval(function() {
+
+    mainSeconds--;
+
+    const minutes = Math.floor(mainSeconds / 60);
+    const seconds = mainSeconds % 60;
+
+    mainTimer.textContent =
+        minutes + ":" + String(seconds).padStart(2, "0");
+
+    if (mainSeconds <= 0) {
+
+        clearInterval(mainInterval);
+
+        alert("⏰ Verification expired.");
+
+        tg.close();
+    }
+
+}, 1000);
+
+
+// =========================
+// 20 SECOND VERIFICATION
+// =========================
+
+const adInterval = setInterval(function() {
+
+    adSeconds--;
+
+    adTimer.textContent = adSeconds;
+
+    if (adSeconds <= 0) {
+
+        clearInterval(adInterval);
+
+        continueBtn.disabled = false;
+        continueBtn.textContent = "Continue →";
+
+        step1.classList.remove("active");
+        step1.classList.add("done");
+
+        step2.classList.add("active");
+    }
+
+}, 1000);
+
+
+// =========================
+// CONTINUE
+// =========================
+
+continueBtn.addEventListener("click", function() {
+
+    verification.style.display = "none";
+
+    success.style.display = "block";
+
+    step2.classList.remove("active");
+    step2.classList.add("done");
+
+    step3.classList.add("active");
+
+});
+
+
+// =========================
+// GET FILE
+// =========================
+
+document.getElementById("getFileBtn").addEventListener(
+    "click",
+    function() {
+
+        if (!fileCode) {
+
+            alert("❌ File code nahi mila.");
+
+            return;
+        }
+
+        /*
+         * IMPORTANT:
+         * This sends the file code back to the bot.
+         */
+
+        tg.sendData(fileCode);
+
+    }
+);
+
+</script>
+
+</body>
     </html>
