@@ -1,6 +1,8 @@
 import os
 import sqlite3
 import asyncio
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from telegram import (
     Update,
@@ -33,10 +35,41 @@ DB_NAME = "files.db"
 
 
 # =========================
+# RENDER WEB SERVER
+# =========================
+
+class HealthHandler(BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"Indo Share Bot is running!")
+
+    def log_message(self, format, *args):
+        return
+
+
+def start_web_server():
+
+    port = int(os.environ.get("PORT", 10000))
+
+    server = ThreadingHTTPServer(
+        ("0.0.0.0", port),
+        HealthHandler
+    )
+
+    print(f"🌐 Web server running on port {port}")
+
+    server.serve_forever()
+
+
+# =========================
 # DATABASE
 # =========================
 
 def init_db():
+
     conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
 
@@ -53,6 +86,7 @@ def init_db():
 
 
 def save_file(code, file_id):
+
     conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
 
@@ -66,6 +100,7 @@ def save_file(code, file_id):
 
 
 def get_file(code):
+
     conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
 
@@ -96,10 +131,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
 
     if not args:
+
         await update.message.reply_text(
             "👋 Welcome to Indo Share Bot!\n\n"
             "📁 File lene ke liye channel se file link open karein."
         )
+
         return
 
     code = args[0]
@@ -107,15 +144,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     file_id = get_file(code)
 
     if not file_id:
+
         await update.message.reply_text(
             "❌ File nahi mili ya link invalid hai."
         )
-        return
 
-    # IMPORTANT:
-    # Reply keyboard Web App is used because
-    # Telegram.WebApp.sendData() works with
-    # Keyboard Button Mini Apps.
+        return
 
     web_app_button = KeyboardButton(
         text="👀 Watch Ad & Unlock",
@@ -151,9 +185,11 @@ async def upload_command(
         return
 
     if update.effective_user.id != ADMIN_ID:
+
         await update.message.reply_text(
             "❌ Sirf admin file upload kar sakta hai."
         )
+
         return
 
     await update.message.reply_text(
@@ -183,26 +219,35 @@ async def receive_file(
     telegram_file_id = None
 
     if update.message.document:
+
         telegram_file_id = update.message.document.file_id
 
     elif update.message.video:
+
         telegram_file_id = update.message.video.file_id
 
     elif update.message.audio:
+
         telegram_file_id = update.message.audio.file_id
 
     elif update.message.photo:
+
         telegram_file_id = update.message.photo[-1].file_id
 
     if not telegram_file_id:
+
         await update.message.reply_text(
             "❌ Ye file type supported nahi hai."
         )
+
         return
 
     code = f"file_{update.message.message_id}"
 
-    save_file(code, telegram_file_id)
+    save_file(
+        code,
+        telegram_file_id
+    )
 
     bot_username = context.bot.username
 
@@ -233,22 +278,25 @@ async def web_app_data(
     code = update.message.web_app_data.data.strip()
 
     if not code:
+
         await update.message.reply_text(
             "❌ File code nahi mila."
         )
+
         return
 
     file_id = get_file(code)
 
     if not file_id:
+
         await update.message.reply_text(
             "❌ File nahi mili ya link expire ho gaya."
         )
+
         return
 
     user_id = update.effective_user.id
 
-    # Remove the Web App keyboard
     await update.message.reply_text(
         "📤 File sending...",
         reply_markup=ReplyKeyboardRemove()
@@ -256,51 +304,93 @@ async def web_app_data(
 
     sent_message = None
 
-    # Try as document
+    # =========================
+    # DOCUMENT
+    # =========================
+
     try:
+
         sent_message = await context.bot.send_document(
             chat_id=user_id,
             document=file_id
         )
+
     except TelegramError:
+
         pass
 
-    # Try as video
+
+    # =========================
+    # VIDEO
+    # =========================
+
     if sent_message is None:
+
         try:
+
             sent_message = await context.bot.send_video(
                 chat_id=user_id,
                 video=file_id
             )
+
         except TelegramError:
+
             pass
 
-    # Try as audio
+
+    # =========================
+    # AUDIO
+    # =========================
+
     if sent_message is None:
+
         try:
+
             sent_message = await context.bot.send_audio(
                 chat_id=user_id,
                 audio=file_id
             )
+
         except TelegramError:
+
             pass
 
-    # Try as photo
+
+    # =========================
+    # PHOTO
+    # =========================
+
     if sent_message is None:
+
         try:
+
             sent_message = await context.bot.send_photo(
                 chat_id=user_id,
                 photo=file_id
             )
+
         except TelegramError:
+
             pass
 
+
+    # =========================
+    # FAILED
+    # =========================
+
     if sent_message is None:
+
         await update.message.reply_text(
             "❌ File send nahi ho paayi.\n\n"
             "Admin se file ko dobara upload karne ko kahen."
         )
+
         return
+
+
+    # =========================
+    # SUCCESS
+    # =========================
 
     await update.message.reply_text(
         "✅ File successfully sent!\n\n"
@@ -309,15 +399,22 @@ async def web_app_data(
         "🗑️ File 90 seconds ke baad automatically delete ho jayegi."
     )
 
-    # Delete the actual file message after 90 seconds
+
+    # =========================
+    # DELETE AFTER 90 SECONDS
+    # =========================
+
     await asyncio.sleep(90)
 
     try:
+
         await context.bot.delete_message(
             chat_id=user_id,
             message_id=sent_message.message_id
         )
+
     except TelegramError:
+
         pass
 
 
@@ -350,17 +447,32 @@ async def admin_command(
 def main():
 
     if not BOT_TOKEN:
+
         raise ValueError(
             "BOT_TOKEN environment variable missing hai."
         )
 
     if ADMIN_ID == 0:
+
         raise ValueError(
             "ADMIN_ID environment variable missing hai."
         )
 
+
+    # Start Render web server
+    web_thread = threading.Thread(
+        target=start_web_server,
+        daemon=True
+    )
+
+    web_thread.start()
+
+
+    # Database
     init_db()
 
+
+    # Telegram application
     app = (
         Application
         .builder()
@@ -368,6 +480,8 @@ def main():
         .build()
     )
 
+
+    # Commands
     app.add_handler(
         CommandHandler("start", start)
     )
@@ -380,6 +494,8 @@ def main():
         CommandHandler("admin", admin_command)
     )
 
+
+    # File receiver
     app.add_handler(
         MessageHandler(
             filters.Document.ALL
@@ -390,6 +506,8 @@ def main():
         )
     )
 
+
+    # Mini App data
     app.add_handler(
         MessageHandler(
             filters.StatusUpdate.WEB_APP_DATA,
@@ -397,10 +515,17 @@ def main():
         )
     )
 
+
     print("🤖 Indo Share Bot Started...")
 
+
+    # Start Telegram bot
     app.run_polling()
 
+
+# =========================
+# RUN
+# =========================
 
 if __name__ == "__main__":
     main()
