@@ -1,7 +1,14 @@
 import os
 import sqlite3
+import asyncio
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+from telegram import (
+    Update,
+    KeyboardButton,
+    ReplyKeyboardMarkup,
+    ReplyKeyboardRemove,
+    WebAppInfo,
+)
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -88,7 +95,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     args = context.args
 
-    # Normal /start
     if not args:
         await update.message.reply_text(
             "👋 Welcome to Indo Share Bot!\n\n"
@@ -106,22 +112,29 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    keyboard = [
-        [
-            InlineKeyboardButton(
-                "🚀 Verify & Get File",
-                web_app=WebAppInfo(
-                    url=f"{MINI_APP_URL}?file={code}"
-                )
-            )
-        ]
-    ]
+    # IMPORTANT:
+    # Reply keyboard Web App is used because
+    # Telegram.WebApp.sendData() works with
+    # Keyboard Button Mini Apps.
+
+    web_app_button = KeyboardButton(
+        text="👀 Watch Ad & Unlock",
+        web_app=WebAppInfo(
+            url=f"{MINI_APP_URL}?file={code}"
+        )
+    )
+
+    keyboard = ReplyKeyboardMarkup(
+        [[web_app_button]],
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
 
     await update.message.reply_text(
         "🔐 One quick step\n\n"
-        "Watch the short ad to unlock this file, "
-        "then you'll be brought right back.",
-        reply_markup=InlineKeyboardMarkup(keyboard)
+        "👀 Watch the short ad and complete verification.\n\n"
+        "Then your file will be sent automatically.",
+        reply_markup=keyboard
     )
 
 
@@ -214,9 +227,10 @@ async def web_app_data(
     if not update.message:
         return
 
-    data = update.message.web_app_data.data
+    if not update.message.web_app_data:
+        return
 
-    code = data.strip()
+    code = update.message.web_app_data.data.strip()
 
     if not code:
         await update.message.reply_text(
@@ -228,73 +242,83 @@ async def web_app_data(
 
     if not file_id:
         await update.message.reply_text(
-            "❌ File nahi mili."
+            "❌ File nahi mili ya link expire ho gaya."
         )
         return
 
-    await update.message.reply_text(
-        "📤 File sending..."
-    )
-
     user_id = update.effective_user.id
 
-    # Try different Telegram file types
-    sent = False
+    # Remove the Web App keyboard
+    await update.message.reply_text(
+        "📤 File sending...",
+        reply_markup=ReplyKeyboardRemove()
+    )
 
-    # Document
+    sent_message = None
+
+    # Try as document
     try:
-        await context.bot.send_document(
+        sent_message = await context.bot.send_document(
             chat_id=user_id,
             document=file_id
         )
-        sent = True
     except TelegramError:
         pass
 
-    # Video
-    if not sent:
+    # Try as video
+    if sent_message is None:
         try:
-            await context.bot.send_video(
+            sent_message = await context.bot.send_video(
                 chat_id=user_id,
                 video=file_id
             )
-            sent = True
         except TelegramError:
             pass
 
-    # Audio
-    if not sent:
+    # Try as audio
+    if sent_message is None:
         try:
-            await context.bot.send_audio(
+            sent_message = await context.bot.send_audio(
                 chat_id=user_id,
                 audio=file_id
             )
-            sent = True
         except TelegramError:
             pass
 
-    # Photo
-    if not sent:
+    # Try as photo
+    if sent_message is None:
         try:
-            await context.bot.send_photo(
+            sent_message = await context.bot.send_photo(
                 chat_id=user_id,
                 photo=file_id
             )
-            sent = True
         except TelegramError:
             pass
 
-    if not sent:
+    if sent_message is None:
         await update.message.reply_text(
             "❌ File send nahi ho paayi.\n\n"
-            "File ko dobara /upload se upload karke try karein."
+            "Admin se file ko dobara upload karne ko kahen."
         )
         return
 
     await update.message.reply_text(
         "✅ File successfully sent!\n\n"
-        "⚠️ File ko apne Saved Messages mein forward/save kar lena."
+        "⚠️ Is file ko apne Saved Messages mein "
+        "forward/save kar lena.\n\n"
+        "🗑️ File 90 seconds ke baad automatically delete ho jayegi."
     )
+
+    # Delete the actual file message after 90 seconds
+    await asyncio.sleep(90)
+
+    try:
+        await context.bot.delete_message(
+            chat_id=user_id,
+            message_id=sent_message.message_id
+        )
+    except TelegramError:
+        pass
 
 
 # =========================
@@ -344,7 +368,6 @@ def main():
         .build()
     )
 
-    # Commands
     app.add_handler(
         CommandHandler("start", start)
     )
@@ -357,7 +380,6 @@ def main():
         CommandHandler("admin", admin_command)
     )
 
-    # File receiver
     app.add_handler(
         MessageHandler(
             filters.Document.ALL
@@ -368,8 +390,6 @@ def main():
         )
     )
 
-    # IMPORTANT:
-    # Mini App se aane wala data
     app.add_handler(
         MessageHandler(
             filters.StatusUpdate.WEB_APP_DATA,
