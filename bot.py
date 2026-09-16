@@ -297,12 +297,20 @@ async def web_app_data(
 
     user_id = update.effective_user.id
 
+    # Remove Mini App keyboard
     await update.message.reply_text(
         "📤 File sending...",
         reply_markup=ReplyKeyboardRemove()
     )
 
     sent_message = None
+
+    # Caption shown UNDER the file/video
+    caption = (
+        "⚠️ Is file ko apne Saved Messages mein "
+        "forward/save kar lena.\n\n"
+        "🗑️ File 90 seconds ke baad automatically delete ho jayegi."
+    )
 
     # =========================
     # DOCUMENT
@@ -312,7 +320,8 @@ async def web_app_data(
 
         sent_message = await context.bot.send_document(
             chat_id=user_id,
-            document=file_id
+            document=file_id,
+            caption=caption
         )
 
     except TelegramError:
@@ -330,7 +339,8 @@ async def web_app_data(
 
             sent_message = await context.bot.send_video(
                 chat_id=user_id,
-                video=file_id
+                video=file_id,
+                caption=caption
             )
 
         except TelegramError:
@@ -348,7 +358,8 @@ async def web_app_data(
 
             sent_message = await context.bot.send_audio(
                 chat_id=user_id,
-                audio=file_id
+                audio=file_id,
+                caption=caption
             )
 
         except TelegramError:
@@ -366,7 +377,8 @@ async def web_app_data(
 
             sent_message = await context.bot.send_photo(
                 chat_id=user_id,
-                photo=file_id
+                photo=file_id,
+                caption=caption
             )
 
         except TelegramError:
@@ -389,19 +401,7 @@ async def web_app_data(
 
 
     # =========================
-    # SUCCESS
-    # =========================
-
-    await update.message.reply_text(
-        "✅ File successfully sent!\n\n"
-        "⚠️ Is file ko apne Saved Messages mein "
-        "forward/save kar lena.\n\n"
-        "🗑️ File 90 seconds ke baad automatically delete ho jayegi."
-    )
-
-
-    # =========================
-    # DELETE AFTER 90 SECONDS
+    # DELETE FILE AFTER 90 SEC
     # =========================
 
     await asyncio.sleep(90)
@@ -472,7 +472,7 @@ def main():
     init_db()
 
 
-    # Telegram application
+    # Telegram bot
     app = (
         Application
         .builder()
@@ -519,7 +519,7 @@ def main():
     print("🤖 Indo Share Bot Started...")
 
 
-    # Start Telegram bot
+    # Start bot
     app.run_polling()
 
 
