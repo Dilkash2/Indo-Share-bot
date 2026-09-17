@@ -25,12 +25,13 @@ from telegram.error import TelegramError
 # =========================
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-
 MINI_APP_URL = "https://dilkash2.github.io/Indo-Share-bot/"
-
 ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
-
 DB_NAME = "files.db"
+
+
+# Temporary verification status
+verified_users = {}
 
 
 # =========================
@@ -150,29 +151,39 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return
 
-    web_app_button = KeyboardButton(
-        text="👀 Watch Ad & Unlock",
+    # Save current file code for this user
+    user_id = update.effective_user.id
+    verified_users.pop(user_id, None)
+
+    watch_button = KeyboardButton(
+        text="📥 Watch Ad & Unlock",
         web_app=WebAppInfo(
             url=f"{MINI_APP_URL}?file={code}"
         )
     )
 
+    completed_button = KeyboardButton(
+        text="✅ I've completed it"
+    )
+
     keyboard = ReplyKeyboardMarkup(
-        [[web_app_button]],
-        resize_keyboard=True,
-        one_time_keyboard=True
+        [
+            [watch_button],
+            [completed_button]
+        ],
+        resize_keyboard=True
     )
 
     await update.message.reply_text(
-        "🔐 One quick step\n\n"
-        "👀 Watch the short ad and complete verification.\n\n"
-        "Then your file will be sent automatically.",
+        "🔒 One quick step\n\n"
+        "Watch a short ad to unlock this file,\n"
+        "then you'll be brought right back.",
         reply_markup=keyboard
     )
 
 
 # =========================
-# UPLOAD COMMAND
+# UPLOAD
 # =========================
 
 async def upload_command(
@@ -243,10 +254,7 @@ async def receive_file(
 
     code = f"file_{update.message.message_id}"
 
-    save_file(
-        code,
-        telegram_file_id
-    )
+    save_file(code, telegram_file_id)
 
     bot_username = context.bot.username
 
@@ -260,7 +268,7 @@ async def receive_file(
 
 
 # =========================
-# WEB APP DATA
+# MINI APP DATA
 # =========================
 
 async def web_app_data(
@@ -274,12 +282,61 @@ async def web_app_data(
     if not update.message.web_app_data:
         return
 
-    code = update.message.web_app_data.data.strip()
+    data = update.message.web_app_data.data.strip()
+
+    if not data:
+        return
+
+    # Mini App sends:
+    # verified|file_code
+
+    if data.startswith("verified|"):
+
+        code = data.split("|", 1)[1].strip()
+
+        if not code:
+            return
+
+        file_id = get_file(code)
+
+        if not file_id:
+            await update.message.reply_text(
+                "❌ File nahi mili ya link invalid hai."
+            )
+            return
+
+        user_id = update.effective_user.id
+
+        # Mark user as verified
+        verified_users[user_id] = code
+
+        await update.message.reply_text(
+            "✅ Verification completed!\n\n"
+            "Ab neeche **✅ I've completed it** button dabayein."
+        )
+
+
+# =========================
+# COMPLETED BUTTON
+# =========================
+
+async def completed_button(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    if not update.message:
+        return
+
+    user_id = update.effective_user.id
+
+    code = verified_users.get(user_id)
 
     if not code:
 
         await update.message.reply_text(
-            "❌ File code nahi mila."
+            "🔒 Pehle **📥 Watch Ad & Unlock** par click karke "
+            "verification complete karein."
         )
 
         return
@@ -288,15 +345,14 @@ async def web_app_data(
 
     if not file_id:
 
+        verified_users.pop(user_id, None)
+
         await update.message.reply_text(
             "❌ File nahi mili ya link expire ho gaya."
         )
 
         return
 
-    user_id = update.effective_user.id
-
-    # Caption shown under the file
     caption = (
         "⚠️ Is file ko apne Saved Messages mein "
         "forward/save kar lena.\n\n"
@@ -305,11 +361,7 @@ async def web_app_data(
 
     sent_message = None
 
-
-    # =========================
     # DOCUMENT
-    # =========================
-
     try:
 
         sent_message = await context.bot.send_document(
@@ -319,14 +371,9 @@ async def web_app_data(
         )
 
     except TelegramError:
-
         pass
 
-
-    # =========================
     # VIDEO
-    # =========================
-
     if sent_message is None:
 
         try:
@@ -338,14 +385,9 @@ async def web_app_data(
             )
 
         except TelegramError:
-
             pass
 
-
-    # =========================
     # AUDIO
-    # =========================
-
     if sent_message is None:
 
         try:
@@ -357,14 +399,9 @@ async def web_app_data(
             )
 
         except TelegramError:
-
             pass
 
-
-    # =========================
     # PHOTO
-    # =========================
-
     if sent_message is None:
 
         try:
@@ -376,13 +413,7 @@ async def web_app_data(
             )
 
         except TelegramError:
-
             pass
-
-
-    # =========================
-    # FAILED
-    # =========================
 
     if sent_message is None:
 
@@ -393,11 +424,10 @@ async def web_app_data(
 
         return
 
+    # Remove verification status
+    verified_users.pop(user_id, None)
 
-    # =========================
-    # DELETE FILE AFTER 90 SEC
-    # =========================
-
+    # Delete file after 90 seconds
     await asyncio.sleep(90)
 
     try:
@@ -408,12 +438,11 @@ async def web_app_data(
         )
 
     except TelegramError:
-
         pass
 
 
 # =========================
-# ADMIN COMMAND
+# ADMIN
 # =========================
 
 async def admin_command(
@@ -441,17 +470,14 @@ async def admin_command(
 def main():
 
     if not BOT_TOKEN:
-
         raise ValueError(
             "BOT_TOKEN environment variable missing hai."
         )
 
     if ADMIN_ID == 0:
-
         raise ValueError(
             "ADMIN_ID environment variable missing hai."
         )
-
 
     # Render web server
     web_thread = threading.Thread(
@@ -461,10 +487,8 @@ def main():
 
     web_thread.start()
 
-
     # Database
     init_db()
-
 
     # Telegram bot
     app = (
@@ -474,8 +498,6 @@ def main():
         .build()
     )
 
-
-    # Commands
     app.add_handler(
         CommandHandler("start", start)
     )
@@ -488,8 +510,7 @@ def main():
         CommandHandler("admin", admin_command)
     )
 
-
-    # File receiver
+    # Admin file upload
     app.add_handler(
         MessageHandler(
             filters.Document.ALL
@@ -500,8 +521,7 @@ def main():
         )
     )
 
-
-    # Mini App data
+    # Mini App verification
     app.add_handler(
         MessageHandler(
             filters.StatusUpdate.WEB_APP_DATA,
@@ -509,17 +529,18 @@ def main():
         )
     )
 
+    # I've completed it button
+    app.add_handler(
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND,
+            completed_button
+        )
+    )
 
     print("🤖 Indo Share Bot Started...")
 
-
-    # Start Telegram bot
     app.run_polling()
 
-
-# =========================
-# RUN
-# =========================
 
 if __name__ == "__main__":
     main()
