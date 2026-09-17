@@ -8,7 +8,6 @@ from telegram import (
     Update,
     KeyboardButton,
     ReplyKeyboardMarkup,
-    ReplyKeyboardRemove,
     WebAppInfo,
 )
 from telegram.ext import (
@@ -297,20 +296,15 @@ async def web_app_data(
 
     user_id = update.effective_user.id
 
-    # Remove Mini App keyboard
-    await update.message.reply_text(
-        "📤 File sending...",
-        reply_markup=ReplyKeyboardRemove()
-    )
-
-    sent_message = None
-
-    # Caption shown UNDER the file/video
+    # Caption shown under the file
     caption = (
         "⚠️ Is file ko apne Saved Messages mein "
         "forward/save kar lena.\n\n"
         "🗑️ File 90 seconds ke baad automatically delete ho jayegi."
     )
+
+    sent_message = None
+
 
     # =========================
     # DOCUMENT
@@ -459,7 +453,7 @@ def main():
         )
 
 
-    # Start Render web server
+    # Render web server
     web_thread = threading.Thread(
         target=start_web_server,
         daemon=True
@@ -519,7 +513,7 @@ def main():
     print("🤖 Indo Share Bot Started...")
 
 
-    # Start bot
+    # Start Telegram bot
     app.run_polling()
 
 
