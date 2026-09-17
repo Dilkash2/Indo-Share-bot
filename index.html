@@ -1,369 +1,366 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>File Verification</title>
-
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
+    <title>Ninja Game - Verification</title>
     <style>
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f3f4f6;
-            color: #111827;
+            background-color: #f4faf6;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            color: #333;
+            padding: 10px;
         }
 
+        /* Main Container resembling a mobile app screens */
+        .app-container {
+            width: 100%;
+            max-width: 420px;
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #e2f0e7;
+        }
+
+        /* Header Styles */
         .header {
-            background: #16a34a;
+            background-color: #21b563;
             color: white;
-            padding: 18px;
-            text-align: center;
-            font-size: 21px;
-            font-weight: bold;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        .container {
+        .header .title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .header .icon {
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        /* Verification Card Content */
+        .content {
             padding: 20px;
         }
 
-        .card {
-            background: white;
-            border-radius: 16px;
-            padding: 22px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        }
-
-        .title {
-            font-size: 22px;
-            font-weight: bold;
+        .verify-box {
             text-align: center;
-            margin-bottom: 8px;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #6b7280;
-            font-size: 14px;
             margin-bottom: 20px;
+            position: relative;
         }
 
-        .steps {
+        .verify-badge {
+            background: #21b563;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .verify-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #111;
+        }
+
+        .verify-subtitle {
+            font-size: 0.9rem;
+            color: #777;
+            margin-top: 4px;
+        }
+
+        .counter {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            color: #21b563;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        /* Timeline / Steps Progress */
+        .steps-container {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 22px;
+            align-items: center;
+            margin: 25px 0;
+            padding: 0 10px;
+            position: relative;
+        }
+
+        .steps-line {
+            position: absolute;
+            top: 20px;
+            left: 40px;
+            right: 40px;
+            height: 2px;
+            background: #e0e0e0;
+            z-index: 1;
         }
 
         .step {
             text-align: center;
-            font-size: 12px;
-            color: #9ca3af;
+            z-index: 2;
             flex: 1;
         }
 
-        .circle {
-            width: 34px;
-            height: 34px;
+        .step-icon {
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
-            margin: 0 auto 6px;
-            background: #e5e7eb;
+            background: #fff;
+            border: 2px solid #21b563;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
+            margin: 0 auto 5px;
+            font-size: 1.2rem;
         }
 
-        .active .circle,
-        .done .circle {
-            background: #16a34a;
-            color: white;
+        .step.locked .step-icon {
+            border-color: #d1d1d1;
+            background: #f9f9f9;
         }
 
-        .active,
-        .done {
-            color: #16a34a;
+        .step-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #21b563;
         }
 
-        .timer {
-            text-align: center;
-            font-size: 14px;
-            color: #dc2626;
-            margin-bottom: 15px;
-            font-weight: bold;
+        .step.locked .step-label {
+            color: #aaaaaa;
         }
 
-        .ad-box {
-            border: 2px dashed #d1d5db;
+        /* Timer/Expiry Banner */
+        .expiry-banner {
+            background-color: #fff9e6;
+            border: 1px solid #ffe8cc;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 25px;
+        }
+
+        .expiry-text {
+            display: flex;
+            justify-content: space-between;
+            color: #b26a00;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .progress-bar-bg {
+            background: #ebdcb9;
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            background: #f59e0b;
+            height: 100%;
+            width: 85%; /* Dynamic width */
+            border-radius: 3px;
+        }
+
+        /* Task Cards */
+        .task-card {
+            background: #ffffff;
+            border: 1px solid #e8f5ed;
             border-radius: 12px;
-            padding: 28px 10px;
-            text-align: center;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(33, 181, 99, 0.04);
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .task-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 12px;
+            text-transform: uppercase;
+        }
+
+        .status-badge.pending {
+            background: #e6f7ee;
+            color: #21b563;
+        }
+
+        .status-badge.locked {
+            background: #fff5eb;
+            color: #f59e0b;
+        }
+
+        .task-desc {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.4;
             margin-bottom: 18px;
-            color: #6b7280;
         }
 
-        .ad-title {
-            font-weight: bold;
-            color: #111827;
-            margin-bottom: 8px;
-        }
-
-        button {
+        /* Buttons */
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             width: 100%;
+            padding: 14px;
             border: none;
-            border-radius: 12px;
-            padding: 15px;
-            font-size: 17px;
-            font-weight: bold;
-            background: #16a34a;
-            color: white;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
             cursor: pointer;
+            transition: background 0.2s;
         }
 
-        button:disabled {
-            background: #9ca3af;
+        .btn-primary {
+            background: #21b563;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #199e53;
+        }
+
+        .btn-disabled {
+            background: #f0f3f1;
+            color: #999bb3;
             cursor: not-allowed;
+            border: 1px solid #e2e5e3;
         }
 
-        .success {
-            display: none;
+        /* Footer Info */
+        .footer-note {
             text-align: center;
-        }
-
-        .success-icon {
-            font-size: 55px;
-            margin-bottom: 10px;
-        }
-
-        .small {
-            text-align: center;
-            color: #6b7280;
-            font-size: 12px;
+            font-size: 0.75rem;
+            color: #999;
             margin-top: 15px;
+            margin-bottom: 5px;
         }
     </style>
 </head>
-
 <body>
 
-<div class="header">
-    📁 FILE BOT
-</div>
+<div class="app-container">
+    <!-- top header -->
+    <div class="header">
+        <span class="icon">✕</span>
+        <span class="title">Ninja Game</span>
+        <span class="icon">⋮</span>
+    </div>
 
-<div class="container">
-
-    <div class="card">
-
-        <div class="title">
-            File Verification
+    <!-- Main Content Body -->
+    <div class="content">
+        
+        <!-- Verification Section Header -->
+        <div class="verify-box">
+            <div class="verify-badge">✓</div>
+            <div class="verify-title">Verification</div>
+            <div class="verify-subtitle">Speed Share · unlock your file</div>
+            <div class="counter">0 / 1</div>
         </div>
 
-        <div class="subtitle">
-            Complete the verification to unlock your file.
+        <!-- Progress Steps -->
+        <div class="steps-container">
+            <div class="steps-line"></div>
+            
+            <div class="step">
+                <div class="step-icon">📺</div>
+                <div class="step-label">Watch</div>
+            </div>
+            
+            <div class="step locked">
+                <div class="step-icon">🔒</div>
+                <div class="step-label">Verify</div>
+            </div>
+            
+            <div class="step locked">
+                <div class="step-icon">🎁</div>
+                <div class="step-label">Done</div>
+            </div>
         </div>
 
-        <div class="steps">
-
-            <div class="step active" id="step1">
-                <div class="circle">1</div>
-                Watch
+        <!-- Expiry Progress Bar -->
+        <div class="expiry-banner">
+            <div class="expiry-text">
+                <span>⏱ Expires in</span>
+                <span>4:42</span>
             </div>
-
-            <div class="step" id="step2">
-                <div class="circle">2</div>
-                Verify
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill"></div>
             </div>
-
-            <div class="step" id="step3">
-                <div class="circle">3</div>
-                Done
-            </div>
-
         </div>
 
-        <div class="timer">
-            Expires in <span id="mainTimer">5:00</span>
+        <!-- Task 1: Watch & Click -->
+        <div class="task-card">
+            <div class="task-header">
+                <div class="task-title">📺 Watch & Click</div>
+                <span class="status-badge pending">Pending</span>
+            </div>
+            <div class="task-desc">
+                Watch the ad and <strong>tap the button inside it</strong> to qualify. Passive views don't count.
+            </div>
+            <button class="btn btn-primary">▶ Start Task</button>
         </div>
 
-        <div id="verification">
-
-            <div class="ad-box">
-                <div class="ad-title">
-                    👀 Watch & Verify
-                </div>
-
-                <div>
-                    Please wait while the verification timer completes.
-                </div>
-
-                <br>
-
-                <div>
-                    Ad timer:
-                    <strong id="adTimer">20</strong>s
-                </div>
+        <!-- Task 2: Verify & Confirm (Locked) -->
+        <div class="task-card" style="background: #fafafa; border-color: #eee;">
+            <div class="task-header">
+                <div class="task-title" style="color: #888;">🔐 Verify & Confirm</div>
+                <span class="status-badge locked">Locked</span>
             </div>
-
-            <button id="continueBtn" disabled>
-                Please wait...
-            </button>
-
+            <div class="task-desc" style="text-align: center; color: #888; margin-bottom: 12px;">
+                Complete the task above to unlock.
+            </div>
+            <button class="btn btn-disabled" disabled>Verify & Confirm</button>
         </div>
 
-        <div class="success" id="success">
-
-            <div class="success-icon">
-                ✅
-            </div>
-
-            <div class="title">
-                Verification Complete
-            </div>
-
-            <div class="subtitle">
-                Your file is ready.
-            </div>
-
-            <button id="getFileBtn">
-                📥 GET FILE
-            </button>
-
-        </div>
-
-        <div class="small">
-            Do not close this page during verification.
+        <!-- Footer -->
+        <div class="footer-note">
+            Secured by Speed Share · Ninja
         </div>
 
     </div>
-
 </div>
 
-<script>
-
-const tg = window.Telegram.WebApp;
-
-tg.ready();
-tg.expand();
-
-const params = new URLSearchParams(window.location.search);
-
-const fileCode = params.get("file");
-
-let mainSeconds = 300;
-let adSeconds = 20;
-
-const mainTimer = document.getElementById("mainTimer");
-const adTimer = document.getElementById("adTimer");
-const continueBtn = document.getElementById("continueBtn");
-const verification = document.getElementById("verification");
-const success = document.getElementById("success");
-
-const step1 = document.getElementById("step1");
-const step2 = document.getElementById("step2");
-const step3 = document.getElementById("step3");
-
-
-// =========================
-// MAIN 5 MINUTE TIMER
-// =========================
-
-const mainInterval = setInterval(function() {
-
-    mainSeconds--;
-
-    const minutes = Math.floor(mainSeconds / 60);
-    const seconds = mainSeconds % 60;
-
-    mainTimer.textContent =
-        minutes + ":" + String(seconds).padStart(2, "0");
-
-    if (mainSeconds <= 0) {
-
-        clearInterval(mainInterval);
-
-        alert("⏰ Verification expired.");
-
-        tg.close();
-    }
-
-}, 1000);
-
-
-// =========================
-// 20 SECOND VERIFICATION
-// =========================
-
-const adInterval = setInterval(function() {
-
-    adSeconds--;
-
-    adTimer.textContent = adSeconds;
-
-    if (adSeconds <= 0) {
-
-        clearInterval(adInterval);
-
-        continueBtn.disabled = false;
-        continueBtn.textContent = "Continue →";
-
-        step1.classList.remove("active");
-        step1.classList.add("done");
-
-        step2.classList.add("active");
-    }
-
-}, 1000);
-
-
-// =========================
-// CONTINUE
-// =========================
-
-continueBtn.addEventListener("click", function() {
-
-    verification.style.display = "none";
-
-    success.style.display = "block";
-
-    step2.classList.remove("active");
-    step2.classList.add("done");
-
-    step3.classList.add("active");
-
-});
-
-
-// =========================
-// GET FILE
-// =========================
-
-document.getElementById("getFileBtn").addEventListener(
-    "click",
-    function() {
-
-        if (!fileCode) {
-
-            alert("❌ File code nahi mila.");
-
-            return;
-        }
-
-        /*
-         * IMPORTANT:
-         * This sends the file code back to the bot.
-         */
-
-        tg.sendData(fileCode);
-
-    }
-);
-
-</script>
-
 </body>
-    </html>
+                              </html>
+                    
