@@ -9,358 +9,352 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
-            background-color: #f4faf6;
+            background-color: #f1f9f4;
             display: flex;
             justify-content: center;
             align-items: flex-start;
             min-height: 100vh;
-            color: #333;
-            padding: 10px;
+            padding: 12px;
         }
 
-        /* Main Container resembling a mobile app screens */
+        /* Main Wrapper */
         .app-container {
             width: 100%;
-            max-width: 420px;
+            max-width: 450px;
             background: #ffffff;
-            border-radius: 16px;
+            border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            border: 1px solid #e2f0e7;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            padding: 16px;
         }
 
-        /* Header Styles */
-        .header {
-            background-color: #21b563;
-            color: white;
-            padding: 15px 20px;
+        /* Top Bar Header */
+        .top-verify-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-        }
-
-        .header .title {
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-
-        .header .icon {
-            font-size: 1.2rem;
-            cursor: pointer;
-        }
-
-        /* Verification Card Content */
-        .content {
-            padding: 20px;
-        }
-
-        .verify-box {
-            text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             position: relative;
         }
 
-        .verify-badge {
-            background: #21b563;
+        .green-badge {
+            background: #22b05b;
             color: white;
-            width: 35px;
-            height: 35px;
-            border-radius: 8px;
-            display: inline-flex;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 1.4rem;
             font-weight: bold;
-            font-size: 1.2rem;
-            margin-bottom: 10px;
+            box-shadow: 0 4px 10px rgba(34, 176, 91, 0.2);
         }
 
-        .verify-title {
-            font-size: 1.3rem;
+        .center-titles {
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        .main-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #111111;
+        }
+
+        .sub-title {
+            font-size: 0.85rem;
+            color: #7b837d;
+            margin-top: 2px;
+        }
+
+        .counter-badge {
+            background: #eef7f2;
+            color: #22b05b;
+            padding: 4px 10px;
+            border-radius: 12px;
             font-weight: 700;
-            color: #111;
+            font-size: 0.85rem;
         }
 
-        .verify-subtitle {
-            font-size: 0.9rem;
-            color: #777;
-            margin-top: 4px;
+        /* Status Section Card */
+        .status-box {
+            background: #ffffff;
+            border: 1px solid #eef4f0;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+            margin-bottom: 20px;
         }
 
-        .counter {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            color: #21b563;
-            font-weight: bold;
-            font-size: 0.95rem;
-        }
-
-        /* Timeline / Steps Progress */
-        .steps-container {
+        /* Progress Steps Grid */
+        .steps-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 25px 0;
-            padding: 0 10px;
             position: relative;
+            margin-bottom: 20px;
+            padding: 0 10px;
         }
 
-        .steps-line {
+        .steps-connecting-line {
             position: absolute;
-            top: 20px;
-            left: 40px;
-            right: 40px;
+            top: 24px;
+            left: 45px;
+            right: 45px;
             height: 2px;
-            background: #e0e0e0;
+            background: #eef2f0;
             z-index: 1;
         }
 
-        .step {
+        .step-item {
             text-align: center;
             z-index: 2;
             flex: 1;
         }
 
-        .step-icon {
-            width: 42px;
-            height: 42px;
+        .circle-icon {
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
-            background: #fff;
-            border: 2px solid #21b563;
+            background: #ffffff;
+            border: 1px solid #e2e8e5;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 5px;
+            margin: 0 auto 6px;
             font-size: 1.2rem;
         }
 
-        .step.locked .step-icon {
-            border-color: #d1d1d1;
-            background: #f9f9f9;
+        .step-item.active .circle-icon {
+            border: 2px solid #22b05b;
+            box-shadow: 0 0 0 4px #eef7f2;
         }
 
-        .step-label {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #21b563;
+        .step-text {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #a4b0a8;
         }
 
-        .step.locked .step-label {
-            color: #aaaaaa;
+        .step-item.active .step-text {
+            color: #22b05b;
         }
 
-        /* Timer/Expiry Banner */
-        .expiry-banner {
-            background-color: #fff9e6;
-            border: 1px solid #ffe8cc;
-            border-radius: 8px;
-            padding: 10px 15px;
-            margin-bottom: 25px;
+        /* Expiry Yellow Timer Banner */
+        .timer-banner {
+            background: #fff9ed;
+            border: 1px solid #fbf0d9;
+            border-radius: 12px;
+            padding: 12px;
         }
 
-        .expiry-text {
+        .timer-row {
             display: flex;
             justify-content: space-between;
-            color: #b26a00;
             font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 6px;
+            font-weight: 700;
+            color: #b3812d;
+            margin-bottom: 8px;
         }
 
-        .progress-bar-bg {
-            background: #ebdcb9;
+        .progress-track {
+            background: #eedcb8;
             height: 6px;
-            border-radius: 3px;
+            border-radius: 4px;
             overflow: hidden;
         }
 
-        .progress-bar-fill {
-            background: #f59e0b;
+        .progress-fill {
+            background: #f09713;
             height: 100%;
-            width: 85%; /* Dynamic width */
-            border-radius: 3px;
+            width: 100%; /* Started at full 100% for 5 mins */
+            border-radius: 4px;
+            transition: width 1s linear;
         }
 
-        /* Task Cards */
-        .task-card {
+        /* Tasks Layout Cards */
+        .task-container {
             background: #ffffff;
-            border: 1px solid #e8f5ed;
-            border-radius: 12px;
+            border: 1px solid #f1f5f2;
+            border-radius: 16px;
             padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(33, 181, 99, 0.04);
+            margin-bottom: 16px;
+            box-shadow: 0 4px 14px rgba(34, 176, 91, 0.03);
         }
 
-        .task-header {
+        .task-top-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
         }
 
-        .task-title {
+        .task-name {
             font-size: 1.1rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            font-weight: 800;
+            color: #0c1a11;
         }
 
-        .status-badge {
+        .label-badge {
             font-size: 0.75rem;
-            font-weight: 700;
-            padding: 4px 10px;
+            font-weight: 800;
+            padding: 4px 12px;
             border-radius: 12px;
-            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .status-badge.pending {
-            background: #e6f7ee;
-            color: #21b563;
+        .label-badge.pending {
+            background: #eef7f2;
+            color: #22b05b;
         }
 
-        .status-badge.locked {
-            background: #fff5eb;
-            color: #f59e0b;
+        .label-badge.locked {
+            background: #fff8ee;
+            color: #c98a24;
         }
 
-        .task-desc {
+        .task-description {
             font-size: 0.9rem;
-            color: #666;
-            line-height: 1.4;
+            color: #637067;
+            line-height: 1.45;
             margin-bottom: 18px;
         }
 
-        /* Buttons */
-        .btn {
+        .task-description strong {
+            color: #111;
+        }
+
+        /* Action Buttons */
+        .action-button {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
             width: 100%;
             padding: 14px;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 1rem;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: background 0.2s;
         }
 
-        .btn-primary {
-            background: #21b563;
+        .action-button.start {
+            background: #22b05b;
             color: white;
+            box-shadow: 0 4px 12px rgba(34, 176, 91, 0.15);
         }
 
-        .btn-primary:hover {
-            background: #199e53;
-        }
-
-        .btn-disabled {
-            background: #f0f3f1;
-            color: #999bb3;
+        .action-button.disabled {
+            background: #eff3f0;
+            color: #aeb8b1;
             cursor: not-allowed;
-            border: 1px solid #e2e5e3;
         }
 
-        /* Footer Info */
-        .footer-note {
+        /* Bottom Brand Text */
+        .brand-footer {
             text-align: center;
             font-size: 0.75rem;
-            color: #999;
-            margin-top: 15px;
-            margin-bottom: 5px;
+            color: #abb5ae;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <!-- top header -->
-    <div class="header">
-        <span class="icon">✕</span>
-        <span class="title">Ninja Game</span>
-        <span class="icon">⋮</span>
+    
+    <!-- Top Header Title Details -->
+    <div class="top-verify-header">
+        <div class="green-badge">✓</div>
+        <div class="center-titles">
+            <div class="main-title">Verification</div>
+            <div class="sub-title">Speed Share · unlock your file</div>
+        </div>
+        <div class="counter-badge">0/1</div>
     </div>
 
-    <!-- Main Content Body -->
-    <div class="content">
-        
-        <!-- Verification Section Header -->
-        <div class="verify-box">
-            <div class="verify-badge">✓</div>
-            <div class="verify-title">Verification</div>
-            <div class="verify-subtitle">Speed Share · unlock your file</div>
-            <div class="counter">0 / 1</div>
-        </div>
-
-        <!-- Progress Steps -->
-        <div class="steps-container">
-            <div class="steps-line"></div>
+    <!-- Status Box Container (Steps + Timer) -->
+    <div class="status-box">
+        <div class="steps-row">
+            <div class="steps-connecting-line"></div>
             
-            <div class="step">
-                <div class="step-icon">📺</div>
-                <div class="step-label">Watch</div>
+            <div class="step-item active">
+                <div class="circle-icon">📺</div>
+                <div class="step-text">Watch</div>
             </div>
             
-            <div class="step locked">
-                <div class="step-icon">🔒</div>
-                <div class="step-label">Verify</div>
+            <div class="step-item">
+                <div class="circle-icon">🔒</div>
+                <div class="step-text">Verify</div>
             </div>
             
-            <div class="step locked">
-                <div class="step-icon">🎁</div>
-                <div class="step-label">Done</div>
+            <div class="step-item">
+                <div class="circle-icon">🎁</div>
+                <div class="step-text">Done</div>
             </div>
         </div>
 
-        <!-- Expiry Progress Bar -->
-        <div class="expiry-banner">
-            <div class="expiry-text">
+        <!-- Expiration Dynamic Banner -->
+        <div class="timer-banner">
+            <div class="timer-row">
                 <span>⏱ Expires in</span>
-                <span>4:42</span>
+                <span id="countdown-clock">5:00</span>
             </div>
-            <div class="progress-bar-bg">
-                <div class="progress-bar-fill"></div>
+            <div class="progress-track">
+                <div class="progress-fill" id="progress-bar"></div>
             </div>
         </div>
-
-        <!-- Task 1: Watch & Click -->
-        <div class="task-card">
-            <div class="task-header">
-                <div class="task-title">📺 Watch & Click</div>
-                <span class="status-badge pending">Pending</span>
-            </div>
-            <div class="task-desc">
-                Watch the ad and <strong>tap the button inside it</strong> to qualify. Passive views don't count.
-            </div>
-            <button class="btn btn-primary">▶ Start Task</button>
-        </div>
-
-        <!-- Task 2: Verify & Confirm (Locked) -->
-        <div class="task-card" style="background: #fafafa; border-color: #eee;">
-            <div class="task-header">
-                <div class="task-title" style="color: #888;">🔐 Verify & Confirm</div>
-                <span class="status-badge locked">Locked</span>
-            </div>
-            <div class="task-desc" style="text-align: center; color: #888; margin-bottom: 12px;">
-                Complete the task above to unlock.
-            </div>
-            <button class="btn btn-disabled" disabled>Verify & Confirm</button>
-        </div>
-
-        <!-- Footer -->
-        <div class="footer-note">
-            Secured by Speed Share · Ninja
-        </div>
-
     </div>
+
+    <!-- Task Block 1: Watch & Click -->
+    <div class="task-container">
+        <div class="task-top-bar">
+            <div class="task-name">📺 Watch & Click</div>
+            <span class="label-badge pending">PENDING</span>
+        </div>
+        <div class="task-description">
+            Watch the ad and <strong>tap the button inside it</strong> to qualify. Passive views don't count.
+        </div>
+        <button class="action-button start" onclick="startTaskAction()">► Start Task</button>
+    </div>
+
+    <!-- Task Block 2: Verify & Confirm (Locked) -->
+    <div class="task-container" style="background: #fafcfb; box-shadow: none; border-color: #ebf0ec;">
+        <div class="task-top-bar">
+            <div class="task-name" style="color: #92a196;">🔒 Verify & Confirm</div>
+            <span class="label-badge locked">LOCKED</span>
+        </div>
+        <div class="task-description" style="text-align: center; color: #92a196; margin-bottom: 12px;">
+            Complete the task above to unlock.
+        </div>
+        <button class="action-button disabled" disabled>Verify & Confirm</button>
+    </div>
+
+    <!-- Bottom Verification Footer -->
+    <div class="brand-footer">
+        Secured by Speed Share · Ninja
+    </div>
+
 </div>
 
-</body>
-                              </html>
-                    
+<!-- JavaScript Engine For Countdown Timer -->
+<script>
+    // 5 mint का टाइमर सेट करने के लिए (5 मिनट * 60 सेकंड = 300 सेकंड)
+    let totalSeconds = 5 * 60; 
+    const initialSeconds = totalSeconds;
+    
+    const countdownElement = document.getElementById('countdown-clock');
+    const progressBarElement = document.getElementById('progress-bar');
+
+    const timerInterval = setInterval(() => {
+        if (totalSeconds <= 0) {
+            clearInterval(timerInterval);
+            countdownElement.textContent = "0:00";
+            progressBarElement.style.width = "0%";
+    
