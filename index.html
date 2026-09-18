@@ -1,558 +1,655 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
-    >
+<meta charset="UTF-8">
 
-    <title>Verification</title>
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>Indo Share</title>
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f1f8f4;
-            color: #17251d;
-        }
+<style>
 
-        .header {
-            background: #16a34a;
-            color: white;
-            padding: 22px 20px;
-            text-align: center;
-        }
+* {
+    box-sizing: border-box;
+}
 
-        .header-icon {
-            width: 54px;
-            height: 54px;
-            background: white;
-            color: #16a34a;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 10px;
-            font-size: 28px;
-            font-weight: bold;
-        }
+body {
+    margin: 0;
+    background: #f1f8f4;
+    color: #17251d;
+    font-family: Arial, sans-serif;
+}
 
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-        }
+/* HEADER */
 
-        .header p {
-            margin: 7px 0 0;
-            font-size: 14px;
-            opacity: 0.95;
-        }
+.header {
+    background: #38bdf8;
+    color: white;
+    text-align: center;
+    padding: 28px 15px 25px;
+    border-radius: 0 0 25px 25px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.10);
+}
 
-        .container {
-            max-width: 520px;
-            margin: auto;
-            padding: 18px 15px 30px;
-        }
+.logo {
+    font-family: "Trebuchet MS", Arial, sans-serif;
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-shadow: 2px 3px 5px rgba(0,0,0,0.18);
+}
 
-        .progress-card {
-            background: white;
-            border-radius: 16px;
-            padding: 18px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-        }
+.subtitle {
+    margin-top: 6px;
+    font-size: 13px;
+    opacity: 0.95;
+}
 
-        .progress-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 14px;
-        }
+/* MAIN */
 
-        .count {
-            font-size: 21px;
-            font-weight: bold;
-        }
+.container {
+    max-width: 520px;
+    margin: auto;
+    padding: 18px 15px 30px;
+}
 
-        .timer {
-            font-size: 14px;
-            color: #16a34a;
-            font-weight: bold;
-        }
+/* PROGRESS */
 
-        .steps {
-            display: flex;
-            justify-content: space-between;
-            position: relative;
-        }
+.progress-card {
+    background: white;
+    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
 
-        .step {
-            text-align: center;
-            width: 33%;
-            font-size: 12px;
-            color: #8a958e;
-            position: relative;
-            z-index: 2;
-        }
+.progress-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
 
-        .circle {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            background: #e5ebe7;
-            margin: 0 auto 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
+.count {
+    font-size: 21px;
+    font-weight: bold;
+}
 
-        .step.active .circle,
-        .step.done .circle {
-            background: #16a34a;
-            color: white;
-        }
+.timer {
+    font-size: 14px;
+    color: #16a34a;
+    font-weight: bold;
+}
 
-        .step.active,
-        .step.done {
-            color: #16a34a;
-            font-weight: bold;
-        }
+/* STEPS */
 
-        .task-card {
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-        }
+.steps {
+    display: flex;
+    justify-content: space-between;
+}
 
-        .task-title {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
+.step {
+    width: 33.33%;
+    text-align: center;
+    color: #8a958e;
+    font-size: 13px;
+    font-weight: 600;
+}
 
-        .task-title h2 {
-            margin: 0;
-            font-size: 18px;
-        }
+.emoji {
+    font-size: 35px;
+    line-height: 42px;
+    margin-bottom: 5px;
+}
 
-        .pending {
-            background: #fff3cd;
-            color: #9a6b00;
-            padding: 5px 9px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: bold;
-        }
+.step.active {
+    color: #16a34a;
+}
 
-        .task-text {
-            color: #65716a;
-            font-size: 14px;
-            line-height: 1.5;
-            margin-bottom: 18px;
-        }
+.step.done {
+    color: #16a34a;
+}
 
-        button {
-            width: 100%;
-            border: 0;
-            border-radius: 12px;
-            padding: 15px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-        }
+.bar {
+    height: 6px;
+    background: #e2e9e4;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 16px;
+}
 
-        .start-btn,
-        .complete-btn {
-            background: #16a34a;
-            color: white;
-        }
+.bar-fill {
+    height: 100%;
+    width: 100%;
+    background: #38bdf8;
+    transition: width 1s linear;
+}
 
-        .start-btn:active,
-        .complete-btn:active {
-            transform: scale(0.98);
-        }
+/* TASK CARD */
 
-        .verify-card {
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-        }
+.task-card {
+    background: white;
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
 
-        .verify-title {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
+.task-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
 
-        .verify-title h2 {
-            margin: 0;
-            font-size: 18px;
-        }
+.task-title h2 {
+    margin: 0;
+    font-size: 18px;
+}
 
-        .locked {
-            background: #e8ece9;
-            color: #78827c;
-            padding: 5px 9px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: bold;
-        }
+.pending {
+    background: #fff3cd;
+    color: #9a6b00;
+    padding: 5px 9px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: bold;
+}
 
-        .verify-text {
-            color: #65716a;
-            font-size: 14px;
-            margin-bottom: 15px;
-        }
+.task-text {
+    color: #65716a;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 18px;
+}
 
-        .verify-btn {
-            background: #dce3df;
-            color: #8a938e;
-        }
+/* BUTTONS */
 
-        .hidden {
-            display: none !important;
-        }
+button {
+    width: 100%;
+    border: 0;
+    border-radius: 12px;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
 
-        .expired {
-            color: #dc2626 !important;
-        }
+.start-btn,
+.complete-btn {
+    background: #16a34a;
+    color: white;
+}
 
-        .bar {
-            height: 6px;
-            background: #e2e9e4;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-top: 10px;
-        }
+.start-btn:active,
+.complete-btn:active {
+    transform: scale(0.98);
+}
 
-        .bar-fill {
-            height: 100%;
-            width: 100%;
-            background: #16a34a;
-            transition: width 1s linear;
-        }
+/* VERIFY */
 
-        .success {
-            text-align: center;
-            padding: 20px 10px;
-        }
+.verify-card {
+    background: white;
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
 
-        .success-icon {
-            font-size: 45px;
-            margin-bottom: 8px;
-        }
+.verify-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
 
-        .success h2 {
-            margin: 0 0 8px;
-            color: #16a34a;
-        }
+.verify-title h2 {
+    margin: 0;
+    font-size: 18px;
+}
 
-        .success p {
-            color: #65716a;
-            font-size: 14px;
-        }
-    </style>
+.locked {
+    background: #e8ece9;
+    color: #78827c;
+    padding: 5px 9px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.verify-text {
+    color: #65716a;
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+.verify-btn {
+    background: #dce3df;
+    color: #8a938e;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.expired {
+    color: #dc2626 !important;
+}
+
+.success {
+    text-align: center;
+    padding: 20px 10px;
+}
+
+.success-icon {
+    font-size: 45px;
+}
+
+.success h2 {
+    color: #16a34a;
+}
+
+.success p {
+    color: #65716a;
+    font-size: 14px;
+}
+
+</style>
 </head>
 
 <body>
 
-    <div class="header">
-        <div class="header-icon">✓</div>
-        <h1>Verification</h1>
-        <p>Speed Share · unlock your file</p>
+<!-- HEADER -->
+
+<div class="header">
+
+    <div class="logo">
+        Indo Share
     </div>
 
-    <div class="container">
+    <div class="subtitle">
+        Fast • Secure • Easy File Sharing
+    </div>
 
-        <div class="progress-card">
+</div>
 
-            <div class="progress-top">
-                <div class="count" id="count">0 / 1</div>
-                <div class="timer" id="timer">Expires in 5:00</div>
+
+<div class="container">
+
+<!-- PROGRESS -->
+
+<div class="progress-card">
+
+    <div class="progress-top">
+
+        <div class="count" id="count">
+            0 / 1
+        </div>
+
+        <div class="timer" id="timer">
+            Expires in 5:00
+        </div>
+
+    </div>
+
+
+    <div class="steps">
+
+        <div class="step active" id="stepWatch">
+
+            <div class="emoji">
+                📺
             </div>
 
-            <div class="steps">
-
-                <div class="step active" id="stepWatch">
-                    <div class="circle">1</div>
-                    Watch
-                </div>
-
-                <div class="step" id="stepVerify">
-                    <div class="circle">2</div>
-                    Verify
-                </div>
-
-                <div class="step" id="stepDone">
-                    <div class="circle">3</div>
-                    Done
-                </div>
-
-            </div>
-
-            <div class="bar">
-                <div class="bar-fill" id="barFill"></div>
+            <div>
+                Watch
             </div>
 
         </div>
 
 
-        <div class="task-card" id="taskCard">
+        <div class="step" id="stepVerify">
 
-            <div class="task-title">
-                <h2>📺 Watch & Click</h2>
-                <span class="pending" id="status">PENDING</span>
+            <div class="emoji">
+                🔓
             </div>
 
-            <div class="task-text">
-                Watch the ad and tap the button inside it to qualify.
-                Passive views don't count.
+            <div>
+                Verify
             </div>
-
-            <button
-                class="start-btn"
-                id="startBtn"
-                onclick="startTask()"
-            >
-                ▶ Start Task
-            </button>
-
-            <button
-                class="complete-btn hidden"
-                id="completeBtn"
-                onclick="completeTask()"
-            >
-                ✅ Task Complete
-            </button>
 
         </div>
 
 
-        <div class="verify-card">
+        <div class="step" id="stepDone">
 
-            <div class="verify-title">
-                <h2>🔐 Verify & Confirm</h2>
-                <span class="locked" id="locked">LOCKED</span>
+            <div class="emoji">
+                👍🏼
             </div>
 
-            <div class="verify-text" id="verifyText">
-                Complete the task above to unlock.
+            <div>
+                Done
             </div>
-
-            <button
-                class="verify-btn"
-                id="verifyBtn"
-                disabled
-            >
-                Verify & Confirm
-            </button>
-
-        </div>
-
-
-        <div class="success hidden" id="successBox">
-
-            <div class="success-icon">✅</div>
-
-            <h2>Task Completed!</h2>
-
-            <p>
-                Verification completed.<br>
-                Your file is being sent...
-            </p>
 
         </div>
 
     </div>
 
 
-    <script>
+    <div class="bar">
+        <div class="bar-fill" id="barFill"></div>
+    </div>
 
-        const tg = window.Telegram.WebApp;
-
-        tg.ready();
-        tg.expand();
-
-
-        // Get file code from URL
-        const params = new URLSearchParams(window.location.search);
-        const fileCode = params.get("file");
+</div>
 
 
-        // 5 minute timer
-        let timeLeft = 300;
+<!-- TASK -->
 
-        const timerElement = document.getElementById("timer");
-        const barFill = document.getElementById("barFill");
+<div class="task-card" id="taskCard">
 
+    <div class="task-title">
 
-        const timerInterval = setInterval(() => {
+        <h2>
+            📺 Watch & Click
+        </h2>
 
-            timeLeft--;
+        <span class="pending" id="status">
+            PENDING
+        </span>
 
-            if (timeLeft <= 0) {
-
-                timeLeft = 0;
-
-                clearInterval(timerInterval);
-
-                timerElement.innerText = "Verification expired";
-                timerElement.classList.add("expired");
-
-                document.getElementById("startBtn").disabled = true;
-                document.getElementById("completeBtn").disabled = true;
-
-                return;
-            }
-
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-
-            timerElement.innerText =
-                "Expires in " +
-                minutes +
-                ":" +
-                String(seconds).padStart(2, "0");
+    </div>
 
 
-            const percentage = (timeLeft / 300) * 100;
+    <div class="task-text">
 
-            barFill.style.width = percentage + "%";
+        Watch the ad and tap the button inside it to qualify.
+        Passive views don't count.
 
-        }, 1000);
-
-
-        // Start task
-        function startTask() {
-
-            if (timeLeft <= 0) {
-                return;
-            }
-
-            document.getElementById("startBtn")
-                .classList.add("hidden");
-
-            document.getElementById("completeBtn")
-                .classList.remove("hidden");
-
-            document.getElementById("status")
-                .innerText = "IN PROGRESS";
-
-            document.getElementById("status").style.background =
-                "#dcfce7";
-
-            document.getElementById("status").style.color =
-                "#15803d";
-
-            document.getElementById("stepWatch")
-                .classList.add("done");
-
-            document.getElementById("stepVerify")
-                .classList.add("active");
-
-        }
+    </div>
 
 
-        // Task complete
-        function completeTask() {
+    <button
+        class="start-btn"
+        id="startBtn"
+        onclick="startTask()">
 
-            if (timeLeft <= 0) {
-                return;
-            }
+        ▶ Start Task
 
-            if (!fileCode) {
-                alert("File code missing.");
-                return;
-            }
-
-            document.getElementById("completeBtn")
-                .classList.add("hidden");
-
-            document.getElementById("status")
-                .innerText = "COMPLETED";
-
-            document.getElementById("status").style.background =
-                "#dcfce7";
-
-            document.getElementById("status").style.color =
-                "#15803d";
-
-            document.getElementById("stepVerify")
-                .classList.add("done");
-
-            document.getElementById("stepDone")
-                .classList.add("active");
-
-            document.getElementById("count")
-                .innerText = "1 / 1";
-
-            document.getElementById("locked")
-                .innerText = "UNLOCKED";
-
-            document.getElementById("locked").style.background =
-                "#dcfce7";
-
-            document.getElementById("locked").style.color =
-                "#15803d";
-
-            document.getElementById("verifyText")
-                .innerText = "Verification completed.";
-
-            document.getElementById("verifyBtn")
-                .disabled = false;
-
-            document.getElementById("verifyBtn").style.background =
-                "#16a34a";
-
-            document.getElementById("verifyBtn").style.color =
-                "white";
-
-            document.getElementById("verifyBtn")
-                .onclick = sendFileRequest;
-
-        }
+    </button>
 
 
-        // Send user back to bot with completion link
-        function sendFileRequest() {
+    <button
+        class="complete-btn hidden"
+        id="completeBtn"
+        onclick="completeTask()">
 
-            if (!fileCode) {
-                return;
-            }
+        ✅ Task Complete
 
-            document.getElementById("taskCard")
-                .classList.add("hidden");
+    </button>
 
-            document.getElementById("verifyBtn")
-                .classList.add("hidden");
+</div>
 
-            document.getElementById("successBox")
-                .classList.remove("hidden");
 
-            const botLink =
-                "https://t.me/IndoSharebot?start=complete_" +
-                encodeURIComponent(fileCode);
+<!-- VERIFY -->
 
-            setTimeout(() => {
-                window.location.href = botLink;
-            }, 700);
+<div class="verify-card">
 
-        }
+    <div class="verify-title">
 
-    </script>
+        <h2>
+            🔐 Verify & Confirm
+        </h2>
+
+        <span class="locked" id="locked">
+            LOCKED
+        </span>
+
+    </div>
+
+
+    <div class="verify-text" id="verifyText">
+
+        Complete the task above to unlock.
+
+    </div>
+
+
+    <button
+        class="verify-btn"
+        id="verifyBtn"
+        disabled>
+
+        Verify & Confirm
+
+    </button>
+
+</div>
+
+
+<!-- SUCCESS -->
+
+<div
+    class="success hidden"
+    id="successBox">
+
+    <div class="success-icon">
+        ✅
+    </div>
+
+    <h2>
+        Task Completed!
+    </h2>
+
+    <p>
+        Verification completed.<br>
+        Your file is being sent...
+    </p>
+
+</div>
+
+</div>
+
+
+<script>
+
+const tg = window.Telegram.WebApp;
+
+tg.ready();
+tg.expand();
+
+
+// FILE CODE
+
+const params =
+    new URLSearchParams(window.location.search);
+
+const fileCode =
+    params.get("file");
+
+
+// 5 MINUTES
+
+let timeLeft = 300;
+
+const timerElement =
+    document.getElementById("timer");
+
+const barFill =
+    document.getElementById("barFill");
+
+
+const timerInterval = setInterval(() => {
+
+    timeLeft--;
+
+    if (timeLeft <= 0) {
+
+        timeLeft = 0;
+
+        clearInterval(timerInterval);
+
+        timerElement.innerText =
+            "Verification expired";
+
+        timerElement.classList.add("expired");
+
+        document.getElementById("startBtn").disabled = true;
+
+        document.getElementById("completeBtn").disabled = true;
+
+        return;
+    }
+
+
+    const minutes =
+        Math.floor(timeLeft / 60);
+
+    const seconds =
+        timeLeft % 60;
+
+
+    timerElement.innerText =
+        "Expires in " +
+        minutes +
+        ":" +
+        String(seconds).padStart(2, "0");
+
+
+    const percentage =
+        (timeLeft / 300) * 100;
+
+    barFill.style.width =
+        percentage + "%";
+
+}, 1000);
+
+
+// START TASK
+
+function startTask() {
+
+    if (timeLeft <= 0) {
+        return;
+    }
+
+    document.getElementById("startBtn")
+        .classList.add("hidden");
+
+    document.getElementById("completeBtn")
+        .classList.remove("hidden");
+
+    document.getElementById("status")
+        .innerText = "IN PROGRESS";
+
+    document.getElementById("status").style.background =
+        "#dcfce7";
+
+    document.getElementById("status").style.color =
+        "#15803d";
+
+    document.getElementById("stepWatch")
+        .classList.add("done");
+
+    document.getElementById("stepVerify")
+        .classList.add("active");
+}
+
+
+// TASK COMPLETE
+
+function completeTask() {
+
+    if (timeLeft <= 0) {
+        return;
+    }
+
+    if (!fileCode) {
+        alert("File code missing.");
+        return;
+    }
+
+    document.getElementById("completeBtn")
+        .classList.add("hidden");
+
+    document.getElementById("status")
+        .innerText = "COMPLETED";
+
+    document.getElementById("status").style.background =
+        "#dcfce7";
+
+    document.getElementById("status").style.color =
+        "#15803d";
+
+    document.getElementById("stepVerify")
+        .classList.add("done");
+
+    document.getElementById("stepDone")
+        .classList.add("active");
+
+    document.getElementById("count")
+        .innerText = "1 / 1";
+
+    document.getElementById("locked")
+        .innerText = "UNLOCKED";
+
+    document.getElementById("locked").style.background =
+        "#dcfce7";
+
+    document.getElementById("locked").style.color =
+        "#15803d";
+
+    document.getElementById("verifyText")
+        .innerText =
+        "Verification completed.";
+
+    document.getElementById("verifyBtn")
+        .disabled = false;
+
+    document.getElementById("verifyBtn").style.background =
+        "#16a34a";
+
+    document.getElementById("verifyBtn").style.color =
+        "white";
+
+    document.getElementById("verifyBtn")
+        .onclick = sendFileRequest;
+}
+
+
+// SEND FILE REQUEST
+
+function sendFileRequest() {
+
+    if (!fileCode) {
+        return;
+    }
+
+    document.getElementById("taskCard")
+        .classList.add("hidden");
+
+    document.getElementById("verifyBtn")
+        .classList.add("hidden");
+
+    document.getElementById("successBox")
+        .classList.remove("hidden");
+
+
+    const botLink =
+        "https://t.me/IndoSharebot?start=complete_" +
+        encodeURIComponent(fileCode);
+
+
+    setTimeout(() => {
+
+        window.location.href = botLink;
+
+    }, 700);
+
+}
+
+</script>
 
 </body>
-                </html>
+    </html>
