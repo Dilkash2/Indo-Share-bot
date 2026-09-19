@@ -1,6 +1,6 @@
 import os
-import sqlite3
 import asyncio
+import psycopg2
 
 from telegram import (
     Update,
@@ -25,64 +25,102 @@ from telegram.error import TelegramError
 # =========================
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-
 ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
 
 MINI_APP_URL = "https://dilkash2.github.io/Indo-Share-bot/"
 
-DB_NAME = "files.db"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 
 # =========================
-# DATABASE
+# DATABASE CONNECTION
+# =========================
+
+def get_connection():
+
+    if not DATABASE_URL:
+        raise ValueError(
+            "DATABASE_URL environment variable missing hai."
+        )
+
+    database_url = DATABASE_URL
+
+    # Kuch services old postgres:// format deti hain
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace(
+            "postgres://",
+            "postgresql://",
+            1
+        )
+
+    return psycopg2.connect(database_url)
+
+
+# =========================
+# CREATE TABLE
 # =========================
 
 def init_db():
 
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_connection()
 
     cur = conn.cursor()
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS files (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             code TEXT UNIQUE NOT NULL,
             file_id TEXT NOT NULL
         )
     """)
 
     conn.commit()
+
+    cur.close()
     conn.close()
 
+
+# =========================
+# SAVE FILE
+# =========================
 
 def save_file(code, file_id):
 
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_connection()
 
     cur = conn.cursor()
 
-    cur.execute(
-        "INSERT OR REPLACE INTO files (code, file_id) VALUES (?, ?)",
-        (code, file_id)
-    )
+    cur.execute("""
+        INSERT INTO files (code, file_id)
+        VALUES (%s, %s)
+        ON CONFLICT (code)
+        DO UPDATE SET file_id = EXCLUDED.file_id
+    """, (code, file_id))
 
     conn.commit()
+
+    cur.close()
     conn.close()
 
 
+# =========================
+# GET FILE
+# =========================
+
 def get_file(code):
 
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_connection()
 
     cur = conn.cursor()
 
     cur.execute(
-        "SELECT file_id FROM files WHERE code = ?",
+        "SELECT file_id FROM files WHERE code = %s",
         (code,)
     )
 
     result = cur.fetchone()
 
+    cur.close()
     conn.close()
 
     if result:
@@ -92,7 +130,7 @@ def get_file(code):
 
 
 # =========================
-# START COMMAND
+# START
 # =========================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -112,7 +150,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return
 
-
     code = args[0]
 
 
@@ -122,7 +159,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if code.startswith("complete_"):
 
-        file_code = code.replace("complete_", "", 1)
+        file_code = code.replace(
+            "complete_",
+            "",
+            1
+        )
 
         file_id = get_file(file_code)
 
@@ -133,7 +174,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
             return
-
 
         await send_file(
             update.effective_user.id,
@@ -200,7 +240,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # SEND FILE
 # =========================
 
-async def send_file(user_id, file_id, context):
+async def send_file(
+    user_id,
+    file_id,
+    context
+):
 
     caption = (
         "⚠️ Is file ko apne Saved Messages mein "
@@ -223,6 +267,7 @@ async def send_file(user_id, file_id, context):
         )
 
     except TelegramError:
+
         pass
 
 
@@ -239,6 +284,7 @@ async def send_file(user_id, file_id, context):
             )
 
         except TelegramError:
+
             pass
 
 
@@ -255,6 +301,7 @@ async def send_file(user_id, file_id, context):
             )
 
         except TelegramError:
+
             pass
 
 
@@ -271,6 +318,7 @@ async def send_file(user_id, file_id, context):
             )
 
         except TelegramError:
+
             pass
 
 
@@ -301,7 +349,7 @@ async def send_file(user_id, file_id, context):
 
 
 # =========================
-# DELETE FILE LATER
+# DELETE FILE AFTER 90 SEC
 # =========================
 
 async def delete_file_later(
@@ -311,7 +359,6 @@ async def delete_file_later(
 ):
 
     await asyncio.sleep(90)
-
 
     try:
 
@@ -377,16 +424,12 @@ async def receive_file(
     telegram_file_id = None
 
 
-    # DOCUMENT
-
     if update.message.document:
 
         telegram_file_id = (
             update.message.document.file_id
         )
 
-
-    # VIDEO
 
     elif update.message.video:
 
@@ -395,16 +438,12 @@ async def receive_file(
         )
 
 
-    # AUDIO
-
     elif update.message.audio:
 
         telegram_file_id = (
             update.message.audio.file_id
         )
 
-
-    # PHOTO
 
     elif update.message.photo:
 
@@ -422,12 +461,12 @@ async def receive_file(
         return
 
 
-    # UNIQUE FILE CODE
+    # UNIQUE CODE
 
     code = f"file_{update.message.message_id}"
 
 
-    # SAVE FILE
+    # SAVE IN POSTGRESQL
 
     save_file(
         code,
@@ -435,12 +474,8 @@ async def receive_file(
     )
 
 
-    # BOT USERNAME
-
     bot_username = context.bot.username
 
-
-    # FILE LINK
 
     link = (
         f"https://t.me/"
@@ -462,7 +497,7 @@ async def receive_file(
 
 
 # =========================
-# ADMIN COMMAND
+# ADMIN
 # =========================
 
 async def admin_command(
@@ -481,7 +516,6 @@ async def admin_command(
     await update.message.reply_text(
 
         "👑 ADMIN PANEL\n\n"
-
         "/upload - File upload karein\n"
         "/admin - Admin commands"
 
@@ -508,12 +542,19 @@ def main():
         )
 
 
-    # DATABASE
+    if not DATABASE_URL:
+
+        raise ValueError(
+            "DATABASE_URL environment variable missing hai."
+        )
+
+
+    # CREATE DATABASE TABLE
 
     init_db()
 
 
-    # BOT
+    # CREATE BOT
 
     app = (
         Application
@@ -523,7 +564,7 @@ def main():
     )
 
 
-    # START
+    # COMMANDS
 
     app.add_handler(
         CommandHandler(
@@ -533,8 +574,6 @@ def main():
     )
 
 
-    # UPLOAD
-
     app.add_handler(
         CommandHandler(
             "upload",
@@ -542,8 +581,6 @@ def main():
         )
     )
 
-
-    # ADMIN
 
     app.add_handler(
         CommandHandler(
@@ -575,7 +612,7 @@ def main():
 
 
 # =========================
-# RUN
+# START BOT
 # =========================
 
 if __name__ == "__main__":
