@@ -18,18 +18,21 @@
 
 body {
     margin: 0;
-    background: #f1f8f4;
+    background: #eef8f3;
     color: #17251d;
     font-family: Arial, sans-serif;
 }
 
-/* HEADER */
+
+/* =========================
+   HEADER
+========================= */
 
 .header {
     background: #38bdf8;
     color: white;
     text-align: center;
-    padding: 28px 15px 25px;
+    padding: 25px 15px 23px;
     border-radius: 0 0 25px 25px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.10);
 }
@@ -48,7 +51,10 @@ body {
     opacity: 0.95;
 }
 
-/* MAIN */
+
+/* =========================
+   MAIN
+========================= */
 
 .container {
     max-width: 520px;
@@ -56,7 +62,10 @@ body {
     padding: 18px 15px 30px;
 }
 
-/* PROGRESS */
+
+/* =========================
+   PROGRESS CARD
+========================= */
 
 .progress-card {
     background: white;
@@ -84,7 +93,10 @@ body {
     font-weight: bold;
 }
 
-/* STEPS */
+
+/* =========================
+   STEPS
+========================= */
 
 .steps {
     display: flex;
@@ -113,6 +125,11 @@ body {
     color: #16a34a;
 }
 
+
+/* =========================
+   TIMER BAR
+========================= */
+
 .bar {
     height: 6px;
     background: #e2e9e4;
@@ -128,7 +145,10 @@ body {
     transition: width 1s linear;
 }
 
-/* TASK CARD */
+
+/* =========================
+   TASK CARD
+========================= */
 
 .task-card {
     background: white;
@@ -166,7 +186,10 @@ body {
     margin-bottom: 18px;
 }
 
-/* BUTTONS */
+
+/* =========================
+   BUTTONS
+========================= */
 
 button {
     width: 100%;
@@ -189,7 +212,10 @@ button {
     transform: scale(0.98);
 }
 
-/* VERIFY */
+
+/* =========================
+   VERIFY CARD
+========================= */
 
 .verify-card {
     background: white;
@@ -230,13 +256,10 @@ button {
     color: #8a938e;
 }
 
-.hidden {
-    display: none !important;
-}
 
-.expired {
-    color: #dc2626 !important;
-}
+/* =========================
+   SUCCESS
+========================= */
 
 .success {
     text-align: center;
@@ -256,12 +279,204 @@ button {
     font-size: 14px;
 }
 
+
+/* =========================
+   HIDDEN
+========================= */
+
+.hidden {
+    display: none !important;
+}
+
+.expired {
+    color: #dc2626 !important;
+}
+
+
+/* ==================================================
+   HOW TO COMPLETE POPUP
+================================================== */
+
+.popup-overlay {
+    position: fixed;
+    inset: 0;
+
+    background: rgba(0, 0, 0, 0.42);
+
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+
+    z-index: 9999;
+
+    padding: 0;
+}
+
+
+/* Popup */
+
+.popup {
+    width: 100%;
+    max-width: 560px;
+
+    background: white;
+
+    border-radius: 30px 30px 0 0;
+
+    padding: 38px 28px 30px;
+
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.18);
+
+    animation: popupUp 0.35s ease-out;
+}
+
+
+@keyframes popupUp {
+
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+}
+
+
+/* Popup Icon */
+
+.popup-icon {
+    width: 105px;
+    height: 105px;
+
+    margin: 0 auto 18px;
+
+    border-radius: 28px;
+
+    background: #16a34a;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 64px;
+
+    box-shadow:
+        0 10px 30px rgba(22,163,74,0.30);
+}
+
+
+/* Popup Heading */
+
+.popup h2 {
+    text-align: center;
+
+    margin: 0 0 25px;
+
+    font-size: 32px;
+
+    font-weight: 800;
+
+    color: #101b15;
+}
+
+
+/* Rules box */
+
+.rules {
+    background: #eaf8f0;
+
+    border-radius: 22px;
+
+    padding: 18px 15px;
+
+    margin-bottom: 28px;
+}
+
+
+/* Rule */
+
+.rule {
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 14px;
+
+    margin-bottom: 20px;
+}
+
+.rule:last-child {
+    margin-bottom: 0;
+}
+
+
+/* Rule Emoji */
+
+.rule-icon {
+    width: 38px;
+
+    flex-shrink: 0;
+
+    font-size: 29px;
+
+    line-height: 34px;
+
+    text-align: center;
+}
+
+
+/* Rule text */
+
+.rule-text {
+    font-size: 17px;
+
+    line-height: 1.45;
+
+    color: #617168;
+}
+
+.rule-text strong {
+    color: #122019;
+}
+
+
+/* Start popup button */
+
+.popup-start {
+    background: #16b957;
+
+    color: white;
+
+    border-radius: 16px;
+
+    padding: 17px;
+
+    font-size: 19px;
+
+    font-weight: 800;
+
+    box-shadow:
+        0 8px 22px rgba(22,185,87,0.25);
+}
+
+.popup-start:active {
+    transform: scale(0.98);
+}
+
 </style>
 </head>
 
+
 <body>
 
-<!-- HEADER -->
+
+<!-- =========================
+     HEADER
+========================= -->
 
 <div class="header">
 
@@ -276,9 +491,13 @@ button {
 </div>
 
 
+
 <div class="container">
 
-<!-- PROGRESS -->
+
+<!-- =========================
+     PROGRESS
+========================= -->
 
 <div class="progress-card">
 
@@ -296,6 +515,7 @@ button {
 
 
     <div class="steps">
+
 
         <div class="step active" id="stepWatch">
 
@@ -335,19 +555,29 @@ button {
 
         </div>
 
+
     </div>
 
 
     <div class="bar">
-        <div class="bar-fill" id="barFill"></div>
+
+        <div
+            class="bar-fill"
+            id="barFill">
+        </div>
+
     </div>
 
 </div>
 
 
-<!-- TASK -->
+
+<!-- =========================
+     TASK
+========================= -->
 
 <div class="task-card" id="taskCard">
+
 
     <div class="task-title">
 
@@ -355,8 +585,12 @@ button {
             📺 Watch & Click
         </h2>
 
-        <span class="pending" id="status">
+        <span
+            class="pending"
+            id="status">
+
             PENDING
+
         </span>
 
     </div>
@@ -389,12 +623,17 @@ button {
 
     </button>
 
+
 </div>
 
 
-<!-- VERIFY -->
+
+<!-- =========================
+     VERIFY
+========================= -->
 
 <div class="verify-card">
+
 
     <div class="verify-title">
 
@@ -402,14 +641,20 @@ button {
             🔐 Verify & Confirm
         </h2>
 
-        <span class="locked" id="locked">
+        <span
+            class="locked"
+            id="locked">
+
             LOCKED
+
         </span>
 
     </div>
 
 
-    <div class="verify-text" id="verifyText">
+    <div
+        class="verify-text"
+        id="verifyText">
 
         Complete the task above to unlock.
 
@@ -425,10 +670,14 @@ button {
 
     </button>
 
+
 </div>
 
 
-<!-- SUCCESS -->
+
+<!-- =========================
+     SUCCESS
+========================= -->
 
 <div
     class="success hidden"
@@ -449,84 +698,247 @@ button {
 
 </div>
 
+
 </div>
+
+
+
+<!-- ==================================================
+     HOW TO COMPLETE POPUP
+================================================== -->
+
+<div
+    class="popup-overlay"
+    id="popupOverlay">
+
+
+    <div class="popup">
+
+
+        <div class="popup-icon">
+            ✅
+        </div>
+
+
+        <h2>
+            How to Complete
+        </h2>
+
+
+        <div class="rules">
+
+
+            <!-- RULE 1 -->
+
+            <div class="rule">
+
+                <div class="rule-icon">
+                    ☝️
+                </div>
+
+                <div class="rule-text">
+
+                    <strong>
+                        Click the action button.
+                    </strong>
+
+                    Watching isn't enough —
+                    tap the button inside the ad.
+
+                </div>
+
+            </div>
+
+
+            <!-- RULE 2 -->
+
+            <div class="rule">
+
+                <div class="rule-icon">
+                    ⏱️
+                </div>
+
+                <div class="rule-text">
+
+                    <strong>
+                        Watch the full ad
+                    </strong>
+
+                    before interacting.
+                    Closing early may fail verification.
+
+                </div>
+
+            </div>
+
+
+            <!-- RULE 3 -->
+
+            <div class="rule">
+
+                <div class="rule-icon">
+                    🔄
+                </div>
+
+                <div class="rule-text">
+
+                    <strong>
+                        Expires in 5 min.
+                    </strong>
+
+                    Complete every step
+                    within the window.
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+        <button
+            class="popup-start"
+            onclick="closePopup()">
+
+            ✓ Got it, Let's Start!
+
+        </button>
+
+
+    </div>
+
+</div>
+
 
 
 <script>
 
+
+/* =========================
+   TELEGRAM
+========================= */
+
 const tg = window.Telegram.WebApp;
 
 tg.ready();
+
 tg.expand();
 
 
-// FILE CODE
+
+/* =========================
+   FILE CODE
+========================= */
 
 const params =
-    new URLSearchParams(window.location.search);
+    new URLSearchParams(
+        window.location.search
+    );
 
 const fileCode =
     params.get("file");
 
 
-// 5 MINUTES
+
+/* =========================
+   5 MINUTE TIMER
+========================= */
 
 let timeLeft = 300;
 
+
 const timerElement =
     document.getElementById("timer");
+
 
 const barFill =
     document.getElementById("barFill");
 
 
-const timerInterval = setInterval(() => {
 
-    timeLeft--;
+const timerInterval =
+    setInterval(() => {
 
-    if (timeLeft <= 0) {
 
-        timeLeft = 0;
+        timeLeft--;
 
-        clearInterval(timerInterval);
+
+        if (timeLeft <= 0) {
+
+            timeLeft = 0;
+
+            clearInterval(timerInterval);
+
+
+            timerElement.innerText =
+                "Verification expired";
+
+
+            timerElement.classList.add(
+                "expired"
+            );
+
+
+            document.getElementById(
+                "startBtn"
+            ).disabled = true;
+
+
+            document.getElementById(
+                "completeBtn"
+            ).disabled = true;
+
+
+            return;
+
+        }
+
+
+        const minutes =
+            Math.floor(timeLeft / 60);
+
+
+        const seconds =
+            timeLeft % 60;
+
 
         timerElement.innerText =
-            "Verification expired";
-
-        timerElement.classList.add("expired");
-
-        document.getElementById("startBtn").disabled = true;
-
-        document.getElementById("completeBtn").disabled = true;
-
-        return;
-    }
+            "Expires in " +
+            minutes +
+            ":" +
+            String(seconds).padStart(2, "0");
 
 
-    const minutes =
-        Math.floor(timeLeft / 60);
-
-    const seconds =
-        timeLeft % 60;
+        const percentage =
+            (timeLeft / 300) * 100;
 
 
-    timerElement.innerText =
-        "Expires in " +
-        minutes +
-        ":" +
-        String(seconds).padStart(2, "0");
+        barFill.style.width =
+            percentage + "%";
 
 
-    const percentage =
-        (timeLeft / 300) * 100;
-
-    barFill.style.width =
-        percentage + "%";
-
-}, 1000);
+    }, 1000);
 
 
-// START TASK
+
+/* =========================
+   CLOSE POPUP
+========================= */
+
+function closePopup() {
+
+    document
+        .getElementById("popupOverlay")
+        .classList.add("hidden");
+
+}
+
+
+
+/* =========================
+   START TASK
+========================= */
 
 function startTask() {
 
@@ -534,30 +946,48 @@ function startTask() {
         return;
     }
 
-    document.getElementById("startBtn")
+
+    document
+        .getElementById("startBtn")
         .classList.add("hidden");
 
-    document.getElementById("completeBtn")
+
+    document
+        .getElementById("completeBtn")
         .classList.remove("hidden");
 
-    document.getElementById("status")
+
+    document
+        .getElementById("status")
         .innerText = "IN PROGRESS";
 
-    document.getElementById("status").style.background =
-        "#dcfce7";
 
-    document.getElementById("status").style.color =
-        "#15803d";
+    document
+        .getElementById("status")
+        .style.background = "#dcfce7";
 
-    document.getElementById("stepWatch")
+
+    document
+        .getElementById("status")
+        .style.color = "#15803d";
+
+
+    document
+        .getElementById("stepWatch")
         .classList.add("done");
 
-    document.getElementById("stepVerify")
+
+    document
+        .getElementById("stepVerify")
         .classList.add("active");
+
 }
 
 
-// TASK COMPLETE
+
+/* =========================
+   TASK COMPLETE
+========================= */
 
 function completeTask() {
 
@@ -565,60 +995,100 @@ function completeTask() {
         return;
     }
 
+
     if (!fileCode) {
-        alert("File code missing.");
+
+        alert(
+            "File code missing."
+        );
+
         return;
     }
 
-    document.getElementById("completeBtn")
+
+    document
+        .getElementById("completeBtn")
         .classList.add("hidden");
 
-    document.getElementById("status")
+
+    document
+        .getElementById("status")
         .innerText = "COMPLETED";
 
-    document.getElementById("status").style.background =
-        "#dcfce7";
 
-    document.getElementById("status").style.color =
-        "#15803d";
+    document
+        .getElementById("status")
+        .style.background = "#dcfce7";
 
-    document.getElementById("stepVerify")
+
+    document
+        .getElementById("status")
+        .style.color = "#15803d";
+
+
+    document
+        .getElementById("stepVerify")
         .classList.add("done");
 
-    document.getElementById("stepDone")
+
+    document
+        .getElementById("stepDone")
         .classList.add("active");
 
-    document.getElementById("count")
+
+    document
+        .getElementById("count")
         .innerText = "1 / 1";
 
-    document.getElementById("locked")
+
+    document
+        .getElementById("locked")
         .innerText = "UNLOCKED";
 
-    document.getElementById("locked").style.background =
-        "#dcfce7";
 
-    document.getElementById("locked").style.color =
-        "#15803d";
+    document
+        .getElementById("locked")
+        .style.background = "#dcfce7";
 
-    document.getElementById("verifyText")
+
+    document
+        .getElementById("locked")
+        .style.color = "#15803d";
+
+
+    document
+        .getElementById("verifyText")
         .innerText =
         "Verification completed.";
 
-    document.getElementById("verifyBtn")
+
+    document
+        .getElementById("verifyBtn")
         .disabled = false;
 
-    document.getElementById("verifyBtn").style.background =
-        "#16a34a";
 
-    document.getElementById("verifyBtn").style.color =
-        "white";
+    document
+        .getElementById("verifyBtn")
+        .style.background = "#16a34a";
 
-    document.getElementById("verifyBtn")
-        .onclick = sendFileRequest;
+
+    document
+        .getElementById("verifyBtn")
+        .style.color = "white";
+
+
+    document
+        .getElementById("verifyBtn")
+        .onclick =
+        sendFileRequest;
+
 }
 
 
-// SEND FILE REQUEST
+
+/* =========================
+   SEND FILE REQUEST
+========================= */
 
 function sendFileRequest() {
 
@@ -626,13 +1096,19 @@ function sendFileRequest() {
         return;
     }
 
-    document.getElementById("taskCard")
+
+    document
+        .getElementById("taskCard")
         .classList.add("hidden");
 
-    document.getElementById("verifyBtn")
+
+    document
+        .getElementById("verifyBtn")
         .classList.add("hidden");
 
-    document.getElementById("successBox")
+
+    document
+        .getElementById("successBox")
         .classList.remove("hidden");
 
 
@@ -643,13 +1119,15 @@ function sendFileRequest() {
 
     setTimeout(() => {
 
-        window.location.href = botLink;
+        window.location.href =
+            botLink;
 
     }, 700);
 
 }
 
+
 </script>
 
 </body>
-    </html>
+      </html>
