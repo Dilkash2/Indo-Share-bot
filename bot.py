@@ -133,14 +133,20 @@ def get_file(code):
 # START
 # =========================
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
 
     if not update.message:
         return
 
     args = context.args
 
-    # Normal /start
+    # =========================
+    # NORMAL /START
+    # =========================
+
     if not args:
 
         await update.message.reply_text(
@@ -200,7 +206,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
     # =========================
-    # MINI APP BUTTONS
+    # MINI APP BUTTON
     # =========================
 
     keyboard = InlineKeyboardMarkup([
@@ -212,19 +218,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     url=f"{MINI_APP_URL}?file={code}"
                 )
             )
-        ],
-
-        [
-            InlineKeyboardButton(
-                "✅ I've completed it",
-                web_app=WebAppInfo(
-                    url=f"{MINI_APP_URL}?file={code}&complete=1"
-                )
-            )
         ]
 
     ])
 
+
+    # =========================
+    # SEND ONE QUICK STEP
+    # =========================
 
     await update.message.reply_text(
 
@@ -256,7 +257,9 @@ async def send_file(
     sent_message = None
 
 
+    # =========================
     # DOCUMENT
+    # =========================
 
     try:
 
@@ -271,7 +274,9 @@ async def send_file(
         pass
 
 
+    # =========================
     # VIDEO
+    # =========================
 
     if sent_message is None:
 
@@ -288,7 +293,9 @@ async def send_file(
             pass
 
 
+    # =========================
     # AUDIO
+    # =========================
 
     if sent_message is None:
 
@@ -305,7 +312,9 @@ async def send_file(
             pass
 
 
+    # =========================
     # PHOTO
+    # =========================
 
     if sent_message is None:
 
@@ -322,7 +331,9 @@ async def send_file(
             pass
 
 
+    # =========================
     # FAILED
+    # =========================
 
     if sent_message is None:
 
@@ -337,7 +348,9 @@ async def send_file(
         return
 
 
+    # =========================
     # DELETE AFTER 90 SECONDS
+    # =========================
 
     asyncio.create_task(
         delete_file_later(
@@ -377,8 +390,8 @@ async def delete_file_later(
 # =========================
 
 async def upload_command(
-    update,
-    context
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
 ):
 
     if not update.effective_user:
@@ -405,8 +418,8 @@ async def upload_command(
 # =========================
 
 async def receive_file(
-    update,
-    context
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
 ):
 
     if not update.effective_user:
@@ -424,12 +437,20 @@ async def receive_file(
     telegram_file_id = None
 
 
+    # =========================
+    # DOCUMENT
+    # =========================
+
     if update.message.document:
 
         telegram_file_id = (
             update.message.document.file_id
         )
 
+
+    # =========================
+    # VIDEO
+    # =========================
 
     elif update.message.video:
 
@@ -438,6 +459,10 @@ async def receive_file(
         )
 
 
+    # =========================
+    # AUDIO
+    # =========================
+
     elif update.message.audio:
 
         telegram_file_id = (
@@ -445,12 +470,20 @@ async def receive_file(
         )
 
 
+    # =========================
+    # PHOTO
+    # =========================
+
     elif update.message.photo:
 
         telegram_file_id = (
             update.message.photo[-1].file_id
         )
 
+
+    # =========================
+    # UNSUPPORTED
+    # =========================
 
     if not telegram_file_id:
 
@@ -461,12 +494,16 @@ async def receive_file(
         return
 
 
+    # =========================
     # UNIQUE CODE
+    # =========================
 
     code = f"file_{update.message.message_id}"
 
 
+    # =========================
     # SAVE IN POSTGRESQL
+    # =========================
 
     save_file(
         code,
@@ -477,12 +514,20 @@ async def receive_file(
     bot_username = context.bot.username
 
 
+    # =========================
+    # CREATE FILE LINK
+    # =========================
+
     link = (
         f"https://t.me/"
         f"{bot_username}"
         f"?start={code}"
     )
 
+
+    # =========================
+    # ADMIN RESPONSE
+    # =========================
 
     await update.message.reply_text(
 
@@ -501,8 +546,8 @@ async def receive_file(
 # =========================
 
 async def admin_command(
-    update,
-    context
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
 ):
 
     if not update.effective_user:
@@ -528,12 +573,20 @@ async def admin_command(
 
 def main():
 
+    # =========================
+    # CHECK BOT TOKEN
+    # =========================
+
     if not BOT_TOKEN:
 
         raise ValueError(
             "BOT_TOKEN environment variable missing hai."
         )
 
+
+    # =========================
+    # CHECK ADMIN ID
+    # =========================
 
     if ADMIN_ID == 0:
 
@@ -542,6 +595,10 @@ def main():
         )
 
 
+    # =========================
+    # CHECK DATABASE
+    # =========================
+
     if not DATABASE_URL:
 
         raise ValueError(
@@ -549,12 +606,16 @@ def main():
         )
 
 
+    # =========================
     # CREATE DATABASE TABLE
+    # =========================
 
     init_db()
 
 
+    # =========================
     # CREATE BOT
+    # =========================
 
     app = (
         Application
@@ -564,7 +625,9 @@ def main():
     )
 
 
-    # COMMANDS
+    # =========================
+    # START COMMAND
+    # =========================
 
     app.add_handler(
         CommandHandler(
@@ -574,6 +637,10 @@ def main():
     )
 
 
+    # =========================
+    # UPLOAD COMMAND
+    # =========================
+
     app.add_handler(
         CommandHandler(
             "upload",
@@ -581,6 +648,10 @@ def main():
         )
     )
 
+
+    # =========================
+    # ADMIN COMMAND
+    # =========================
 
     app.add_handler(
         CommandHandler(
@@ -590,7 +661,9 @@ def main():
     )
 
 
+    # =========================
     # FILE RECEIVER
+    # =========================
 
     app.add_handler(
         MessageHandler(
@@ -603,6 +676,10 @@ def main():
     )
 
 
+    # =========================
+    # START BOT
+    # =========================
+
     print(
         "🤖 Indo Share Bot Started..."
     )
@@ -612,7 +689,7 @@ def main():
 
 
 # =========================
-# START BOT
+# RUN
 # =========================
 
 if __name__ == "__main__":
