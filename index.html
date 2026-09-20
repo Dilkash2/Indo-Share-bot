@@ -839,6 +839,15 @@ const params =
 const fileCode =
     params.get("file");
 
+/*
+   Session token is created by the bot.
+   It is used so one verification cycle
+   cannot be reused.
+*/
+
+const sessionToken =
+    params.get("session");
+
 
 
 /* =========================
@@ -1006,6 +1015,16 @@ function completeTask() {
     }
 
 
+    if (!sessionToken) {
+
+        alert(
+            "Verification session missing."
+        );
+
+        return;
+    }
+
+
     document
         .getElementById("completeBtn")
         .classList.add("hidden");
@@ -1097,6 +1116,16 @@ function sendFileRequest() {
     }
 
 
+    if (!sessionToken) {
+
+        alert(
+            "Verification session missing."
+        );
+
+        return;
+    }
+
+
     document
         .getElementById("taskCard")
         .classList.add("hidden");
@@ -1112,9 +1141,16 @@ function sendFileRequest() {
         .classList.remove("hidden");
 
 
+    /*
+       Send both file code and the unique
+       verification session to the bot.
+    */
+
     const botLink =
         "https://t.me/IndoSharebot?start=complete_" +
-        encodeURIComponent(fileCode);
+        encodeURIComponent(fileCode) +
+        "_" +
+        encodeURIComponent(sessionToken);
 
 
     setTimeout(() => {
