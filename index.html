@@ -611,7 +611,7 @@ button {
         <adsgram-task
             class="adsgram-task"
             id="adsTask"
-            data-block-id="task-49083"
+            data-block-id="49083"
             data-debug="true"
             data-debug-console="true">
 
@@ -831,16 +831,16 @@ button {
 
 <script>
 
-
 /* =========================
    TELEGRAM
 ========================= */
 
-const tg = window.Telegram.WebApp;
+const tg = window.Telegram?.WebApp;
 
-tg.ready();
-
-tg.expand();
+if (tg) {
+    tg.ready();
+    tg.expand();
+}
 
 
 /* =========================
@@ -1014,101 +1014,80 @@ function startTask() {
         .getElementById("stepWatch")
         .classList.add("active");
 
-
-    /*
-       AdsGram Task component is now visible.
-
-       The ad/task itself does NOT automatically
-       start when the Mini App opens.
-    */
-
 }
 
 
 /* =========================
-   ADSGRAM REWARD
+   ADSGRAM LISTENERS
 ========================= */
 
-adsTask.addEventListener(
-    "reward",
-    function(event) {
+if (adsTask) {
 
-        console.log(
-            "AdsGram reward:",
-            event.detail
-        );
+    adsTask.addEventListener(
+        "reward",
+        function(event) {
 
+            console.log(
+                "AdsGram reward:",
+                event.detail
+            );
 
-        taskCompleted = true;
+            taskCompleted = true;
 
+            markTaskCompleted();
 
-        markTaskCompleted();
+        }
+    );
 
-    }
-);
+    adsTask.addEventListener(
+        "onError",
+        function(event) {
 
+            console.log(
+                "AdsGram error:",
+                event.detail
+            );
 
-/* =========================
-   ADSGRAM ERROR
-========================= */
+            alert(
+                "Task load nahi ho paaya. Please try again."
+            );
 
-adsTask.addEventListener(
-    "onError",
-    function(event) {
+        }
+    );
 
-        console.log(
-            "AdsGram error:",
-            event.detail
-        );
+    adsTask.addEventListener(
+        "onBannerNotFound",
+        function(event) {
 
-        alert(
-            "Task load nahi ho paaya. Please try again."
-        );
+            console.log(
+                "AdsGram task not found:",
+                event.detail
+            );
 
-    }
-);
+            alert(
+                "Abhi koi task available nahi hai. Please thodi der baad try karein."
+            );
 
+        }
+    );
 
-/* =========================
-   NO BANNER
-========================= */
+    adsTask.addEventListener(
+        "onTooLongSession",
+        function(event) {
 
-adsTask.addEventListener(
-    "onBannerNotFound",
-    function(event) {
+            console.log(
+                "AdsGram session too long:",
+                event.detail
+            );
 
-        console.log(
-            "AdsGram task not found:",
-            event.detail
-        );
+            alert(
+                "Verification session expire ho gaya. Mini App ko dobara open karein."
+            );
 
-        alert(
-            "Abhi koi task available nahi hai. Please thodi der baad try karein."
-        );
+        }
+    );
 
-    }
-);
-
-
-/* =========================
-   LONG SESSION
-========================= */
-
-adsTask.addEventListener(
-    "onTooLongSession",
-    function(event) {
-
-        console.log(
-            "AdsGram session too long:",
-            event.detail
-        );
-
-        alert(
-            "Verification session expire ho gaya. Mini App ko dobara open karein."
-        );
-
-    }
-);
+}
 
 
 /* =========================
@@ -1210,15 +1189,6 @@ function sendFileRequest() {
     }
 
 
-    /*
-       Current bot.py supports:
-
-       /start=complete_FILECODE
-
-       Therefore no session parameter
-       is required in this version.
-    */
-
     document
         .getElementById("taskCard")
         .classList.add("hidden");
@@ -1251,16 +1221,19 @@ function sendFileRequest() {
 
     setTimeout(() => {
 
-        window.location.href =
-            botLink;
+        if (tg && tg.openTelegramLink) {
+            tg.openTelegramLink(botLink);
+            tg.close();
+        } else {
+            window.location.href = botLink;
+        }
 
     }, 700);
 
 }
 
-
 </script>
 
 </body>
 
-      </html>
+</html>
