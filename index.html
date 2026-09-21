@@ -1,1094 +1,1325 @@
-<!DOCTYPE html>  <html lang="en">  
-<head>  
-<meta charset="UTF-8">  <meta name="viewport"  
-content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<!DOCTYPE html>
+<html lang="en">
 
-<title>Indo Share</title>  <script src="https://telegram.org/js/telegram-web-app.js"></script>  <style>  
-  
-* {  
-    box-sizing: border-box;  
-}  
-  
-body {  
-    margin: 0;  
-    background: #eef8f3;  
-    color: #17251d;  
-    font-family: Arial, sans-serif;  
-}  
-  
-  
-/* =========================  
-   HEADER  
-========================= */  
-  
-.header {  
-    background: #38bdf8;  
-    color: white;  
-    text-align: center;  
-    padding: 25px 15px 23px;  
-    border-radius: 0 0 25px 25px;  
-    box-shadow: 0 4px 15px rgba(0,0,0,0.10);  
-}  
-  
-.logo {  
-    font-family: "Trebuchet MS", Arial, sans-serif;  
-    font-size: 42px;  
-    font-weight: 900;  
-    letter-spacing: 1px;  
-    text-shadow: 2px 3px 5px rgba(0,0,0,0.18);  
-}  
-  
-.subtitle {  
-    margin-top: 6px;  
-    font-size: 13px;  
-    opacity: 0.95;  
-}  
-  
-  
-/* =========================  
-   MAIN  
-========================= */  
-  
-.container {  
-    max-width: 520px;  
-    margin: auto;  
-    padding: 18px 15px 30px;  
-}  
-  
-  
-/* =========================  
-   PROGRESS CARD  
-========================= */  
-  
-.progress-card {  
-    background: white;  
-    border-radius: 18px;  
-    padding: 18px;  
-    margin-bottom: 15px;  
-    box-shadow: 0 2px 10px rgba(0,0,0,0.06);  
-}  
-  
-.progress-top {  
-    display: flex;  
-    justify-content: space-between;  
-    align-items: center;  
-    margin-bottom: 18px;  
-}  
-  
-.count {  
-    font-size: 21px;  
-    font-weight: bold;  
-}  
-  
-.timer {  
-    font-size: 14px;  
-    color: #16a34a;  
-    font-weight: bold;  
-}  
-  
-  
-/* =========================  
-   STEPS  
-========================= */  
-  
-.steps {  
-    display: flex;  
-    justify-content: space-between;  
-}  
-  
-.step {  
-    width: 33.33%;  
-    text-align: center;  
-    color: #8a958e;  
-    font-size: 13px;  
-    font-weight: 600;  
-}  
-  
-.emoji {  
-    font-size: 35px;  
-    line-height: 42px;  
-    margin-bottom: 5px;  
-}  
-  
-.step.active {  
-    color: #16a34a;  
-}  
-  
-.step.done {  
-    color: #16a34a;  
-}  
-  
-  
-/* =========================  
-   TIMER BAR  
-========================= */  
-  
-.bar {  
-    height: 6px;  
-    background: #e2e9e4;  
-    border-radius: 10px;  
-    overflow: hidden;  
-    margin-top: 16px;  
-}  
-  
-.bar-fill {  
-    height: 100%;  
-    width: 100%;  
-    background: #38bdf8;  
-    transition: width 1s linear;  
-}  
-  
-  
-/* =========================  
-   TASK CARD  
-========================= */  
-  
-.task-card {  
-    background: white;  
-    border-radius: 18px;  
-    padding: 20px;  
-    margin-bottom: 15px;  
-    box-shadow: 0 2px 10px rgba(0,0,0,0.06);  
-}  
-  
-.task-title {  
-    display: flex;  
-    justify-content: space-between;  
-    align-items: center;  
-    margin-bottom: 12px;  
-}  
-  
-.task-title h2 {  
-    margin: 0;  
-    font-size: 18px;  
-}  
-  
-.pending {  
-    background: #fff3cd;  
-    color: #9a6b00;  
-    padding: 5px 9px;  
-    border-radius: 8px;  
-    font-size: 11px;  
-    font-weight: bold;  
-}  
-  
-.task-text {  
-    color: #65716a;  
-    font-size: 14px;  
-    line-height: 1.5;  
-    margin-bottom: 18px;  
-}  
-  
-  
-/* =========================  
-   BUTTONS  
-========================= */  
-  
-button {  
-    width: 100%;  
-    border: 0;  
-    border-radius: 12px;  
-    padding: 15px;  
-    font-size: 16px;  
-    font-weight: bold;  
-    cursor: pointer;  
-}  
-  
-.start-btn,  
-.complete-btn {  
-    background: #16a34a;  
-    color: white;  
-}  
-  
-.start-btn:active,  
-.complete-btn:active {  
-    transform: scale(0.98);  
-}  
-  
-  
-/* =========================  
-   VERIFY CARD  
-========================= */  
-  
-.verify-card {  
-    background: white;  
-    border-radius: 18px;  
-    padding: 20px;  
-    box-shadow: 0 2px 10px rgba(0,0,0,0.06);  
-}  
-  
-.verify-title {  
-    display: flex;  
-    justify-content: space-between;  
-    align-items: center;  
-    margin-bottom: 10px;  
-}  
-  
-.verify-title h2 {  
-    margin: 0;  
-    font-size: 18px;  
-}  
-  
-.locked {  
-    background: #e8ece9;  
-    color: #78827c;  
-    padding: 5px 9px;  
-    border-radius: 8px;  
-    font-size: 11px;  
-    font-weight: bold;  
-}  
-  
-.verify-text {  
-    color: #65716a;  
-    font-size: 14px;  
-    margin-bottom: 15px;  
-}  
-  
-.verify-btn {  
-    background: #dce3df;  
-    color: #8a938e;  
-}  
-  
-  
-/* =========================  
-   SUCCESS  
-========================= */  
-  
-.success {  
-    text-align: center;  
-    padding: 20px 10px;  
-}  
-  
-.success-icon {  
-    font-size: 45px;  
-}  
-  
-.success h2 {  
-    color: #16a34a;  
-}  
-  
-.success p {  
-    color: #65716a;  
-    font-size: 14px;  
-}  
-  
-  
-/* =========================  
-   HIDDEN  
-========================= */  
-  
-.hidden {  
-    display: none !important;  
-}  
-  
-.expired {  
-    color: #dc2626 !important;  
-}  
-  
-  
-/* ==================================================  
-   HOW TO COMPLETE POPUP  
-================================================== */  
-  
-.popup-overlay {  
-    position: fixed;  
-    inset: 0;  
-  
-    background: rgba(0, 0, 0, 0.42);  
-  
-    display: flex;  
-    align-items: flex-end;  
-    justify-content: center;  
-  
-    z-index: 9999;  
-  
-    padding: 0;  
-}  
-  
-  
-/* Popup */  
-  
-.popup {  
-    width: 100%;  
-    max-width: 560px;  
-  
-    background: white;  
-  
-    border-radius: 30px 30px 0 0;  
-  
-    padding: 38px 28px 30px;  
-  
-    box-shadow: 0 -8px 30px rgba(0,0,0,0.18);  
-  
-    animation: popupUp 0.35s ease-out;  
-}  
-  
-  
-@keyframes popupUp {  
-  
-    from {  
-        transform: translateY(100%);  
-        opacity: 0;  
-    }  
-  
-    to {  
-        transform: translateY(0);  
-        opacity: 1;  
-    }  
-  
-}  
-  
-  
-/* Popup Icon */  
-  
-.popup-icon {  
-    width: 105px;  
-    height: 105px;  
-  
-    margin: 0 auto 18px;  
-  
-    border-radius: 28px;  
-  
-    background: #16a34a;  
-  
-    display: flex;  
-    align-items: center;  
-    justify-content: center;  
-  
-    font-size: 64px;  
-  
-    box-shadow:  
-        0 10px 30px rgba(22,163,74,0.30);  
-}  
-  
-  
-/* Popup Heading */  
-  
-.popup h2 {  
-    text-align: center;  
-  
-    margin: 0 0 25px;  
-  
-    font-size: 32px;  
-  
-    font-weight: 800;  
-  
-    color: #101b15;  
-}  
-  
-  
-/* Rules box */  
-  
-.rules {  
-    background: #eaf8f0;  
-  
-    border-radius: 22px;  
-  
-    padding: 18px 15px;  
-  
-    margin-bottom: 28px;  
-}  
-  
-  
-/* Rule */  
-  
-.rule {  
-    display: flex;  
-  
-    align-items: flex-start;  
-  
-    gap: 14px;  
-  
-    margin-bottom: 20px;  
-}  
-  
-.rule:last-child {  
-    margin-bottom: 0;  
-}  
-  
-  
-/* Rule Emoji */  
-  
-.rule-icon {  
-    width: 38px;  
-  
-    flex-shrink: 0;  
-  
-    font-size: 29px;  
-  
-    line-height: 34px;  
-  
-    text-align: center;  
-}  
-  
-  
-/* Rule text */  
-  
-.rule-text {  
-    font-size: 17px;  
-  
-    line-height: 1.45;  
-  
-    color: #617168;  
-}  
-  
-.rule-text strong {  
-    color: #122019;  
-}  
-  
-  
-/* Start popup button */  
-  
-.popup-start {  
-    background: #16b957;  
-  
-    color: white;  
-  
-    border-radius: 16px;  
-  
-    padding: 17px;  
-  
-    font-size: 19px;  
-  
-    font-weight: 800;  
-  
-    box-shadow:  
-        0 8px 22px rgba(22,185,87,0.25);  
-}  
-  
-.popup-start:active {  
-    transform: scale(0.98);  
-}  
-  
-</style>  </head>  <body>  <!-- =========================  
-     HEADER  
-========================= -->  <div class="header">  <div class="logo">  
-    Indo Share  
-</div>  
+<head>
 
-<div class="subtitle">  
-    Fast • Secure • Easy File Sharing  
-</div>
+<meta charset="UTF-8">
 
-</div>  <div class="container">  <!-- =========================  
-     PROGRESS  
-========================= -->  <div class="progress-card">  <div class="progress-top">  
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
-    <div class="count" id="count">  
-        0 / 1  
-    </div>  
+<title>Indo Share</title>
 
-    <div class="timer" id="timer">  
-        Expires in 5:00  
-    </div>  
+<!-- Telegram WebApp -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-</div>  
+<!-- AdsGram -->
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
 
 
-<div class="steps">  
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #eef8f3;
+    color: #17251d;
+    font-family: Arial, sans-serif;
+}
 
 
-    <div class="step active" id="stepWatch">  
+/* =========================
+   HEADER
+========================= */
 
-        <div class="emoji">  
-            📺  
-        </div>  
+.header {
+    background: #38bdf8;
+    color: white;
+    text-align: center;
+    padding: 25px 15px 23px;
+    border-radius: 0 0 25px 25px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.10);
+}
 
-        <div>  
-            Watch  
-        </div>  
+.logo {
+    font-family: "Trebuchet MS", Arial, sans-serif;
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-shadow: 2px 3px 5px rgba(0,0,0,0.18);
+}
 
-    </div>  
-
-
-    <div class="step" id="stepVerify">  
-
-        <div class="emoji">  
-            🔓  
-        </div>  
-
-        <div>  
-            Verify  
-        </div>  
-
-    </div>  
-
-
-    <div class="step" id="stepDone">  
-
-        <div class="emoji">  
-            👍🏼  
-        </div>  
-
-        <div>  
-            Done  
-        </div>  
-
-    </div>  
+.subtitle {
+    margin-top: 6px;
+    font-size: 13px;
+    opacity: 0.95;
+}
 
 
-</div>  
+/* =========================
+   MAIN
+========================= */
+
+.container {
+    max-width: 520px;
+    margin: auto;
+    padding: 18px 15px 30px;
+}
 
 
-<div class="bar">  
+/* =========================
+   PROGRESS
+========================= */
 
-    <div  
-        class="bar-fill"  
-        id="barFill">  
-    </div>  
+.progress-card {
+    background: white;
+    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+
+.progress-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.count {
+    font-size: 21px;
+    font-weight: bold;
+}
+
+.timer {
+    font-size: 14px;
+    color: #16a34a;
+    font-weight: bold;
+}
+
+.steps {
+    display: flex;
+    justify-content: space-between;
+}
+
+.step {
+    width: 33.33%;
+    text-align: center;
+    color: #8a958e;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.emoji {
+    font-size: 35px;
+    line-height: 42px;
+    margin-bottom: 5px;
+}
+
+.step.active,
+.step.done {
+    color: #16a34a;
+}
+
+
+/* =========================
+   TIMER BAR
+========================= */
+
+.bar {
+    height: 6px;
+    background: #e2e9e4;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 16px;
+}
+
+.bar-fill {
+    height: 100%;
+    width: 100%;
+    background: #38bdf8;
+    transition: width 1s linear;
+}
+
+
+/* =========================
+   TASK CARD
+========================= */
+
+.task-card {
+    background: white;
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+
+.task-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.task-title h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.pending {
+    background: #fff3cd;
+    color: #9a6b00;
+    padding: 5px 9px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.task-text {
+    color: #65716a;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 18px;
+}
+
+
+/* =========================
+   BUTTONS
+========================= */
+
+button {
+    width: 100%;
+    border: 0;
+    border-radius: 12px;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.start-btn {
+    background: #16a34a;
+    color: white;
+}
+
+.start-btn:active {
+    transform: scale(0.98);
+}
+
+.start-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+
+/* =========================
+   VERIFY
+========================= */
+
+.verify-card {
+    background: white;
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+
+.verify-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.verify-title h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.locked {
+    background: #e8ece9;
+    color: #78827c;
+    padding: 5px 9px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.verify-text {
+    color: #65716a;
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+.verify-btn {
+    background: #dce3df;
+    color: #8a938e;
+}
+
+.verify-btn.enabled {
+    background: #16a34a;
+    color: white;
+}
+
+
+/* =========================
+   SUCCESS
+========================= */
+
+.success {
+    text-align: center;
+    padding: 20px 10px;
+}
+
+.success-icon {
+    font-size: 45px;
+}
+
+.success h2 {
+    color: #16a34a;
+}
+
+.success p {
+    color: #65716a;
+    font-size: 14px;
+}
+
+
+/* =========================
+   MESSAGE
+========================= */
+
+.message {
+    margin-top: 15px;
+    padding: 13px;
+    border-radius: 12px;
+    font-size: 14px;
+    text-align: center;
+    display: none;
+}
+
+.message.error {
+    display: block;
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.message.info {
+    display: block;
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+
+/* =========================
+   HIDDEN
+========================= */
+
+.hidden {
+    display: none !important;
+}
+
+.expired {
+    color: #dc2626 !important;
+}
+
+
+/* =========================
+   POPUP
+========================= */
+
+.popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.42);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.popup {
+    width: 100%;
+    max-width: 560px;
+    background: white;
+    border-radius: 30px 30px 0 0;
+    padding: 38px 28px 30px;
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.18);
+    animation: popupUp 0.35s ease-out;
+}
+
+@keyframes popupUp {
+
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+}
+
+.popup-icon {
+    width: 105px;
+    height: 105px;
+    margin: 0 auto 18px;
+    border-radius: 28px;
+    background: #16a34a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 64px;
+    box-shadow: 0 10px 30px rgba(22,163,74,0.30);
+}
+
+.popup h2 {
+    text-align: center;
+    margin: 0 0 25px;
+    font-size: 32px;
+    font-weight: 800;
+    color: #101b15;
+}
+
+.rules {
+    background: #eaf8f0;
+    border-radius: 22px;
+    padding: 18px 15px;
+    margin-bottom: 28px;
+}
+
+.rule {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.rule:last-child {
+    margin-bottom: 0;
+}
+
+.rule-icon {
+    width: 38px;
+    flex-shrink: 0;
+    font-size: 29px;
+    line-height: 34px;
+    text-align: center;
+}
+
+.rule-text {
+    font-size: 17px;
+    line-height: 1.45;
+    color: #617168;
+}
+
+.rule-text strong {
+    color: #122019;
+}
+
+.popup-start {
+    background: #16b957;
+    color: white;
+    border-radius: 16px;
+    padding: 17px;
+    font-size: 19px;
+    font-weight: 800;
+    box-shadow: 0 8px 22px rgba(22,185,87,0.25);
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================
+     HEADER
+========================= -->
+
+<div class="header">
+
+    <div class="logo">
+        Indo Share
+    </div>
+
+    <div class="subtitle">
+        Fast • Secure • Easy File Sharing
+    </div>
 
 </div>
 
-</div>  <!-- =========================  
-     TASK  
-========================= -->  <div class="task-card" id="taskCard">  <div class="task-title">  
 
-    <h2>  
-        📺 Watch & Click  
-    </h2>  
+<div class="container">
 
-    <span  
-        class="pending"  
-        id="status">  
 
-        PENDING  
+<!-- =========================
+     PROGRESS
+========================= -->
 
-    </span>  
+<div class="progress-card">
 
-</div>  
+    <div class="progress-top">
 
+        <div class="count" id="count">
+            0 / 1
+        </div>
 
-<div class="task-text">  
+        <div class="timer" id="timer">
+            Expires in 5:00
+        </div>
 
-    Watch the ad and tap the button inside it to qualify.  
-    Passive views don't count.  
+    </div>
 
-</div>  
 
+    <div class="steps">
 
-<button  
-    class="start-btn"  
-    id="startBtn"  
-    onclick="startTask()">  
+        <div class="step active" id="stepWatch">
 
-    ▶ Start Task  
+            <div class="emoji">
+                📺
+            </div>
 
-</button>  
+            <div>
+                Watch
+            </div>
 
+        </div>
 
-<button  
-    class="complete-btn hidden"  
-    id="completeBtn"  
-    onclick="completeTask()">  
 
-    ✅ Task Complete  
+        <div class="step" id="stepVerify">
 
-</button>
+            <div class="emoji">
+                🔓
+            </div>
 
-</div>  <!-- =========================  
-     VERIFY  
-========================= -->  <div class="verify-card">  <div class="verify-title">  
+            <div>
+                Verify
+            </div>
 
-    <h2>  
-        🔐 Verify & Confirm  
-    </h2>  
+        </div>
 
-    <span  
-        class="locked"  
-        id="locked">  
 
-        LOCKED  
+        <div class="step" id="stepDone">
 
-    </span>  
+            <div class="emoji">
+                👍🏼
+            </div>
 
-</div>  
+            <div>
+                Done
+            </div>
 
+        </div>
 
-<div  
-    class="verify-text"  
-    id="verifyText">  
+    </div>
 
-    Complete the task above to unlock.  
 
-</div>  
+    <div class="bar">
 
+        <div
+            class="bar-fill"
+            id="barFill">
+        </div>
 
-<button  
-    class="verify-btn"  
-    id="verifyBtn"  
-    disabled>  
+    </div>
 
-    Verify & Confirm  
+</div>
 
-</button>
 
-</div>  <!-- =========================  
-     SUCCESS  
-========================= -->  <div  
-    class="success hidden"  
-    id="successBox">  <div class="success-icon">  
-    ✅  
-</div>  
+<!-- =========================
+     TASK
+========================= -->
 
-<h2>  
-    Task Completed!  
-</h2>  
+<div class="task-card" id="taskCard">
 
-<p>  
-    Verification completed.<br>  
-    Your file is being sent...  
-</p>
+    <div class="task-title">
 
-</div>  </div>  <!-- ==================================================  
-     HOW TO COMPLETE POPUP  
-================================================== -->  <div  
-    class="popup-overlay"  
-    id="popupOverlay">  <div class="popup">  
+        <h2>
+            📺 Watch Ad
+        </h2>
 
+        <span
+            class="pending"
+            id="status">
 
-    <div class="popup-icon">  
-        ✅  
-    </div>  
+            PENDING
 
+        </span>
 
-    <h2>  
-        How to Complete  
-    </h2>  
+    </div>
 
 
-    <div class="rules">  
+    <div class="task-text" id="taskText">
 
+        Watch the advertisement completely
+        to unlock your file.
 
-        <!-- RULE 1 -->  
+    </div>
 
-        <div class="rule">  
 
-            <div class="rule-icon">  
-                ☝️  
-            </div>  
+    <button
+        class="start-btn"
+        id="startBtn"
+        onclick="startTask()">
 
-            <div class="rule-text">  
+        ▶ Watch Ad & Unlock
 
-                <strong>  
-                    Click the action button.  
-                </strong>  
+    </button>
 
-                Watching isn't enough —  
-                tap the button inside the ad.  
 
-            </div>  
+    <div
+        class="message"
+        id="message">
+    </div>
 
-        </div>  
+</div>
 
 
-        <!-- RULE 2 -->  
+<!-- =========================
+     VERIFY
+========================= -->
 
-        <div class="rule">  
+<div class="verify-card" id="verifyCard">
 
-            <div class="rule-icon">  
-                ⏱️  
-            </div>  
+    <div class="verify-title">
 
-            <div class="rule-text">  
+        <h2>
+            🔐 Verify & Confirm
+        </h2>
 
-                <strong>  
-                    Watch the full ad  
-                </strong>  
+        <span
+            class="locked"
+            id="locked">
 
-                before interacting.  
-                Closing early may fail verification.  
+            LOCKED
 
-            </div>  
+        </span>
 
-        </div>  
+    </div>
 
 
-        <!-- RULE 3 -->  
+    <div
+        class="verify-text"
+        id="verifyText">
 
-        <div class="rule">  
+        Watch the advertisement completely
+        to unlock verification.
 
-            <div class="rule-icon">  
-                🔄  
-            </div>  
+    </div>
 
-            <div class="rule-text">  
 
-                <strong>  
-                    Expires in 5 min.  
-                </strong>  
+    <button
+        class="verify-btn"
+        id="verifyBtn"
+        disabled>
 
-                Complete every step  
-                within the window.  
+        Verify & Confirm
 
-            </div>  
+    </button>
 
-        </div>  
+</div>
 
 
-    </div>  
+<!-- =========================
+     SUCCESS
+========================= -->
 
+<div
+    class="success hidden"
+    id="successBox">
 
-    <button  
-        class="popup-start"  
-        onclick="closePopup()">  
+    <div class="success-icon">
+        ✅
+    </div>
 
-        ✓ Got it, Let's Start!  
+    <h2>
+        Verification Completed!
+    </h2>
 
-    </button>  
+    <p>
+        Your file is being sent...
+    </p>
+
+</div>
 
 
 </div>
 
-</div>  <script>  
-  
-  
-/* =========================  
-   TELEGRAM  
-========================= */  
-  
-const tg = window.Telegram.WebApp;  
-  
-tg.ready();  
-  
-tg.expand();  
-  
-  
-  
-/* =========================  
-   FILE CODE  
-========================= */  
-  
-const params =  
-    new URLSearchParams(  
-        window.location.search  
-    );  
-  
-const fileCode =  
-    params.get("file");  
-  
-/*  
-   Session token is created by the bot.  
-   It is used so one verification cycle  
-   cannot be reused.  
-*/  
-  
-const sessionToken =  
-    params.get("session");  
-  
-  
-  
-/* =========================  
-   5 MINUTE TIMER  
-========================= */  
-  
-let timeLeft = 300;  
-  
-  
-const timerElement =  
-    document.getElementById("timer");  
-  
-  
-const barFill =  
-    document.getElementById("barFill");  
-  
-  
-  
-const timerInterval =  
-    setInterval(() => {  
-  
-  
-        timeLeft--;  
-  
-  
-        if (timeLeft <= 0) {  
-  
-            timeLeft = 0;  
-  
-            clearInterval(timerInterval);  
-  
-  
-            timerElement.innerText =  
-                "Verification expired";  
-  
-  
-            timerElement.classList.add(  
-                "expired"  
-            );  
-  
-  
-            document.getElementById(  
-                "startBtn"  
-            ).disabled = true;  
-  
-  
-            document.getElementById(  
-                "completeBtn"  
-            ).disabled = true;  
-  
-  
-            return;  
-  
-        }  
-  
-  
-        const minutes =  
-            Math.floor(timeLeft / 60);  
-  
-  
-        const seconds =  
-            timeLeft % 60;  
-  
-  
-        timerElement.innerText =  
-            "Expires in " +  
-            minutes +  
-            ":" +  
-            String(seconds).padStart(2, "0");  
-  
-  
-        const percentage =  
-            (timeLeft / 300) * 100;  
-  
-  
-        barFill.style.width =  
-            percentage + "%";  
-  
-  
-    }, 1000);  
-  
-  
-  
-/* =========================  
-   CLOSE POPUP  
-========================= */  
-  
-function closePopup() {  
-  
-    document  
-        .getElementById("popupOverlay")  
-        .classList.add("hidden");  
-  
-}  
-  
-  
-  
-/* =========================  
-   START TASK  
-========================= */  
-  
-function startTask() {  
-  
-    if (timeLeft <= 0) {  
-        return;  
-    }  
-  
-  
-    document  
-        .getElementById("startBtn")  
-        .classList.add("hidden");  
-  
-  
-    document  
-        .getElementById("completeBtn")  
-        .classList.remove("hidden");  
-  
-  
-    document  
-        .getElementById("status")  
-        .innerText = "IN PROGRESS";  
-  
-  
-    document  
-        .getElementById("status")  
-        .style.background = "#dcfce7";  
-  
-  
-    document  
-        .getElementById("status")  
-        .style.color = "#15803d";  
-  
-  
-    document  
-        .getElementById("stepWatch")  
-        .classList.add("done");  
-  
-  
-    document  
-        .getElementById("stepVerify")  
-        .classList.add("active");  
-  
-}  
-  
-  
-  
-/* =========================  
-   TASK COMPLETE  
-========================= */  
-  
-function completeTask() {  
-  
-    if (timeLeft <= 0) {  
-        return;  
-    }  
-  
-  
-    if (!fileCode) {  
-  
-        alert(  
-            "File code missing."  
-        );  
-  
-        return;  
-    }  
-  
-  
-    if (!sessionToken) {  
-  
-        alert(  
-            "Verification session missing."  
-        );  
-  
-        return;  
-    }  
-  
-  
-    document  
-        .getElementById("completeBtn")  
-        .classList.add("hidden");  
-  
-  
-    document  
-        .getElementById("status")  
-        .innerText = "COMPLETED";  
-  
-  
-    document  
-        .getElementById("status")  
-        .style.background = "#dcfce7";  
-  
-  
-    document  
-        .getElementById("status")  
-        .style.color = "#15803d";  
-  
-  
-    document  
-        .getElementById("stepVerify")  
-        .classList.add("done");  
-  
-  
-    document  
-        .getElementById("stepDone")  
-        .classList.add("active");  
-  
-  
-    document  
-        .getElementById("count")  
-        .innerText = "1 / 1";  
-  
-  
-    document  
-        .getElementById("locked")  
-        .innerText = "UNLOCKED";  
-  
-  
-    document  
-        .getElementById("locked")  
-        .style.background = "#dcfce7";  
-  
-  
-    document  
-        .getElementById("locked")  
-        .style.color = "#15803d";  
-  
-  
-    document  
-        .getElementById("verifyText")  
-        .innerText =  
-        "Verification completed.";  
-  
-  
-    document  
-        .getElementById("verifyBtn")  
-        .disabled = false;  
-  
-  
-    document  
-        .getElementById("verifyBtn")  
-        .style.background = "#16a34a";  
-  
-  
-    document  
-        .getElementById("verifyBtn")  
-        .style.color = "white";  
-  
-  
-    document  
-        .getElementById("verifyBtn")  
-        .onclick =  
-        sendFileRequest;  
-  
-}  
-  
-  
-  
-/* =========================  
-   SEND FILE REQUEST  
-========================= */  
-  
-function sendFileRequest() {  
-  
-    if (!fileCode) {  
-        return;  
-    }  
-  
-  
-    if (!sessionToken) {  
-  
-        alert(  
-            "Verification session missing."  
-        );  
-  
-        return;  
-    }  
-  
-  
-    document  
-        .getElementById("taskCard")  
-        .classList.add("hidden");  
-  
-  
-    document  
-        .getElementById("verifyBtn")  
-        .classList.add("hidden");  
-  
-  
-    document  
-        .getElementById("successBox")  
-        .classList.remove("hidden");  
-  
-  
-    /*  
-       Send both file code and the unique  
-       verification session to the bot.  
-    */  
-  
-    const botLink =  
-        "https://t.me/IndoSharebot?start=complete_" +  
-        encodeURIComponent(fileCode) +  
-        "_" +  
-        encodeURIComponent(sessionToken);  
-  
-  
-    setTimeout(() => {  
-  
-        window.location.href =  
-            botLink;  
-  
-    }, 700);  
-  
-}  
-  
-  
-</script>  </body>  
-      </html>
+
+<!-- =========================
+     POPUP
+========================= -->
+
+<div
+    class="popup-overlay"
+    id="popupOverlay">
+
+    <div class="popup">
+
+        <div class="popup-icon">
+            ✅
+        </div>
+
+
+        <h2>
+            How to Complete
+        </h2>
+
+
+        <div class="rules">
+
+            <div class="rule">
+
+                <div class="rule-icon">
+                    ☝️
+                </div>
+
+                <div class="rule-text">
+
+                    <strong>
+                        Watch the advertisement.
+                    </strong>
+
+                    Tap the button and watch
+                    the Reward Ad completely.
+
+                </div>
+
+            </div>
+
+
+            <div class="rule">
+
+                <div class="rule-icon">
+                    ⏱️
+                </div>
+
+                <div class="rule-text">
+
+                    <strong>
+                        Complete it properly.
+                    </strong>
+
+                    The reward is given only after
+                    the rewarded ad finishes.
+
+                </div>
+
+            </div>
+
+
+            <div class="rule">
+
+                <div class="rule-icon">
+                    🔄
+                </div>
+
+                <div class="rule-text">
+
+                    <strong>
+                        Expires in 5 min.
+                    </strong>
+
+                    Complete the verification
+                    within the verification window.
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <button
+            class="popup-start"
+            onclick="closePopup()">
+
+            ✓ Got it, Let's Start!
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =========================
+   TELEGRAM
+========================= */
+
+const tg = window.Telegram.WebApp;
+
+tg.ready();
+tg.expand();
+
+
+/* =========================
+   URL PARAMETERS
+========================= */
+
+const params =
+    new URLSearchParams(
+        window.location.search
+    );
+
+const fileCode =
+    params.get("file");
+
+
+/* =========================
+   ELEMENTS
+========================= */
+
+const timerElement =
+    document.getElementById("timer");
+
+const barFill =
+    document.getElementById("barFill");
+
+const startBtn =
+    document.getElementById("startBtn");
+
+const statusElement =
+    document.getElementById("status");
+
+const verifyBtn =
+    document.getElementById("verifyBtn");
+
+const verifyText =
+    document.getElementById("verifyText");
+
+const locked =
+    document.getElementById("locked");
+
+const count =
+    document.getElementById("count");
+
+const message =
+    document.getElementById("message");
+
+
+/* =========================
+   ADSGRAM REWARD BLOCK
+========================= */
+
+/*
+   IMPORTANT:
+   49083 is your AdsGram Reward Block ID.
+*/
+
+const ADSGRAM_BLOCK_ID = "49083";
+
+let AdController = null;
+
+
+/* =========================
+   STATE
+========================= */
+
+let timeLeft = 300;
+
+let taskStarted = false;
+
+let taskCompleted = false;
+
+let sending = false;
+
+
+/* =========================
+   ADSGRAM INITIALIZE
+========================= */
+
+function initializeAdsGram() {
+
+    try {
+
+        if (
+            !window.Adsgram ||
+            typeof window.Adsgram.init !== "function"
+        ) {
+
+            showMessage(
+                "AdsGram load nahi hua. Please Mini App ko dobara open karein.",
+                "error"
+            );
+
+            return false;
+        }
+
+
+        AdController =
+            window.Adsgram.init({
+                blockId: ADSGRAM_BLOCK_ID
+            });
+
+
+        console.log(
+            "AdsGram initialized:",
+            ADSGRAM_BLOCK_ID
+        );
+
+
+        return true;
+
+    } catch (error) {
+
+        console.error(
+            "AdsGram initialization error:",
+            error
+        );
+
+        showMessage(
+            "AdsGram initialize nahi ho paaya. Please try again.",
+            "error"
+        );
+
+        return false;
+    }
+
+}
+
+
+/* =========================
+   POPUP
+========================= */
+
+function closePopup() {
+
+    document
+        .getElementById("popupOverlay")
+        .classList.add("hidden");
+
+}
+
+
+/* =========================
+   MESSAGE
+========================= */
+
+function showMessage(text, type) {
+
+    message.innerText = text;
+
+    message.className =
+        "message " + type;
+
+}
+
+
+/* =========================
+   TIMER
+========================= */
+
+const timerInterval =
+    setInterval(() => {
+
+        timeLeft--;
+
+        if (timeLeft <= 0) {
+
+            timeLeft = 0;
+
+            clearInterval(timerInterval);
+
+            timerElement.innerText =
+                "Verification expired";
+
+            timerElement.classList.add(
+                "expired"
+            );
+
+            startBtn.disabled = true;
+
+            verifyBtn.disabled = true;
+
+            return;
+        }
+
+
+        const minutes =
+            Math.floor(timeLeft / 60);
+
+        const seconds =
+            timeLeft % 60;
+
+
+        timerElement.innerText =
+            "Expires in " +
+            minutes +
+            ":" +
+            String(seconds).padStart(2, "0");
+
+
+        const percentage =
+            (timeLeft / 300) * 100;
+
+
+        barFill.style.width =
+            percentage + "%";
+
+
+    }, 1000);
+
+
+/* =========================
+   START TASK / SHOW REWARD AD
+========================= */
+
+async function startTask() {
+
+    if (timeLeft <= 0) {
+
+        showMessage(
+            "Verification session expired. Mini App ko dobara open karein.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    if (taskStarted) {
+        return;
+    }
+
+
+    taskStarted = true;
+
+    startBtn.disabled = true;
+
+    startBtn.innerText =
+        "⏳ Loading Ad...";
+
+
+    statusElement.innerText =
+        "LOADING";
+
+
+    statusElement.style.background =
+        "#e0f2fe";
+
+    statusElement.style.color =
+        "#0369a1";
+
+
+    showMessage(
+        "Advertisement load ho raha hai...",
+        "info"
+    );
+
+
+    if (!AdController) {
+
+        const initialized =
+            initializeAdsGram();
+
+        if (!initialized) {
+
+            resetAdButton();
+
+            return;
+        }
+
+    }
+
+
+    try {
+
+        /*
+           AdsGram Rewarded Ad.
+
+           Reward callback tab execute hoga
+           jab Reward Ad successfully complete
+           ho jayega.
+        */
+
+        const result =
+            await AdController.show();
+
+
+        console.log(
+            "AdsGram result:",
+            result
+        );
+
+
+        /*
+           Reward format:
+           show() resolves when the rewarded
+           advertisement has completed.
+        */
+
+        taskCompleted = true;
+
+        markTaskCompleted();
+
+
+    } catch (error) {
+
+        console.error(
+            "AdsGram show error:",
+            error
+        );
+
+
+        taskStarted = false;
+
+
+        statusElement.innerText =
+            "PENDING";
+
+
+        statusElement.style.background =
+            "#fff3cd";
+
+        statusElement.style.color =
+            "#9a6b00";
+
+
+        resetAdButton();
+
+
+        let errorText =
+            "Ad complete nahi hua. Please try again.";
+
+
+        if (
+            error &&
+            error.description
+        ) {
+
+            console.log(
+                "AdsGram description:",
+                error.description
+            );
+
+        }
+
+
+        showMessage(
+            errorText,
+            "error"
+        );
+
+    }
+
+}
+
+
+/* =========================
+   RESET AD BUTTON
+========================= */
+
+function resetAdButton() {
+
+    startBtn.disabled = false;
+
+    startBtn.innerText =
+        "▶ Watch Ad & Unlock";
+
+}
+
+
+/* =========================
+   TASK COMPLETED
+========================= */
+
+function markTaskCompleted() {
+
+    if (timeLeft <= 0) {
+        return;
+    }
+
+
+    if (!taskCompleted) {
+        return;
+    }
+
+
+    statusElement.innerText =
+        "COMPLETED";
+
+
+    statusElement.style.background =
+        "#dcfce7";
+
+
+    statusElement.style.color =
+        "#15803d";
+
+
+    startBtn.innerText =
+        "✅ Ad Completed";
+
+
+    startBtn.disabled =
+        true;
+
+
+    document
+        .getElementById("stepWatch")
+        .classList.add("done");
+
+
+    document
+        .getElementById("stepVerify")
+        .classList.add("active");
+
+
+    count.innerText =
+        "1 / 1";
+
+
+    locked.innerText =
+        "UNLOCKED";
+
+
+    locked.style.background =
+        "#dcfce7";
+
+
+    locked.style.color =
+        "#15803d";
+
+
+    verifyText.innerText =
+        "Advertisement completed successfully. You can now verify and get your file.";
+
+
+    verifyBtn.disabled =
+        false;
+
+
+    verifyBtn.classList.add(
+        "enabled"
+    );
+
+
+    verifyBtn.onclick =
+        sendFileRequest;
+
+
+    showMessage(
+        "✅ Advertisement completed! Ab Verify & Confirm par click karein.",
+        "info"
+    );
+
+}
+
+
+/* =========================
+   VERIFY & SEND FILE
+========================= */
+
+function sendFileRequest() {
+
+    if (sending) {
+        return;
+    }
+
+
+    if (timeLeft <= 0) {
+
+        alert(
+            "Verification session expired."
+        );
+
+        return;
+    }
+
+
+    if (!fileCode) {
+
+        alert(
+            "File code missing."
+        );
+
+        return;
+    }
+
+
+    sending = true;
+
+
+    document
+        .getElementById("taskCard")
+        .classList.add("hidden");
+
+
+    document
+        .getElementById("verifyCard")
+        .classList.add("hidden");
+
+
+    document
+        .getElementById("successBox")
+        .classList.remove("hidden");
+
+
+    document
+        .getElementById("stepVerify")
+        .classList.add("done");
+
+
+    document
+        .getElementById("stepDone")
+        .classList.add("active");
+
+
+    const botLink =
+        "https://t.me/IndoSharebot?start=complete_" +
+        encodeURIComponent(fileCode);
+
+
+    /*
+       Return to the bot.
+
+       Your current bot.py must support:
+
+       /start complete_FILECODE
+
+       or equivalent start parameter handling.
+    */
+
+    setTimeout(() => {
+
+        window.location.href =
+            botLink;
+
+    }, 700);
+
+}
+
+
+/* =========================
+   INITIAL LOAD
+========================= */
+
+window.addEventListener(
+    "load",
+    () => {
+
+        /*
+           Initialize AdsGram after
+           the page has loaded.
+        */
+
+        initializeAdsGram();
+
+    }
+);
+
+</script>
+
+</body>
+
+  </html>
