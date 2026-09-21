@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
 
 <meta name="viewport"
@@ -10,12 +8,7 @@
 
 <title>Indo Share</title>
 
-<!-- Telegram -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<!-- AdsGram -->
-<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
-
 
 <style>
 
@@ -71,7 +64,7 @@ body {
 
 
 /* =========================
-   PROGRESS
+   PROGRESS CARD
 ========================= */
 
 .progress-card {
@@ -100,6 +93,11 @@ body {
     font-weight: bold;
 }
 
+
+/* =========================
+   STEPS
+========================= */
+
 .steps {
     display: flex;
     justify-content: space-between;
@@ -119,7 +117,10 @@ body {
     margin-bottom: 5px;
 }
 
-.step.active,
+.step.active {
+    color: #16a34a;
+}
+
 .step.done {
     color: #16a34a;
 }
@@ -200,74 +201,20 @@ button {
     cursor: pointer;
 }
 
-.start-btn {
+.start-btn,
+.complete-btn {
     background: #16a34a;
     color: white;
 }
 
-.start-btn:active {
+.start-btn:active,
+.complete-btn:active {
     transform: scale(0.98);
 }
 
 
 /* =========================
-   ADSGRAM TASK
-========================= */
-
-.ads-container {
-    margin-top: 15px;
-}
-
-.adsgram-task {
-    display: block;
-    width: 100%;
-
-    --adsgram-task-font-size: 16px;
-    --adsgram-task-icon-size: 50px;
-    --adsgram-task-icon-title-gap: 10px;
-    --adsgram-task-icon-border-radius: 12px;
-    --adsgram-task-button-width: 100%;
-
-    border-radius: 15px;
-    overflow: hidden;
-}
-
-
-/* AdsGram slots */
-
-.ads-task-button {
-    width: 100%;
-    background: #16a34a;
-    color: white;
-    padding: 14px;
-    border-radius: 12px;
-    font-weight: bold;
-    text-align: center;
-}
-
-.ads-task-claim {
-    width: 100%;
-    background: #f59e0b;
-    color: white;
-    padding: 14px;
-    border-radius: 12px;
-    font-weight: bold;
-    text-align: center;
-}
-
-.ads-task-done {
-    width: 100%;
-    background: #16a34a;
-    color: white;
-    padding: 14px;
-    border-radius: 12px;
-    font-weight: bold;
-    text-align: center;
-}
-
-
-/* =========================
-   VERIFY
+   VERIFY CARD
 ========================= */
 
 .verify-card {
@@ -309,11 +256,6 @@ button {
     color: #8a938e;
 }
 
-.verify-btn.enabled {
-    background: #16a34a;
-    color: white;
-}
-
 
 /* =========================
    SUCCESS
@@ -351,29 +293,43 @@ button {
 }
 
 
-/* =========================
-   POPUP
-========================= */
+/* ==================================================
+   HOW TO COMPLETE POPUP
+================================================== */
 
 .popup-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.42);
+
+    background: rgba(0, 0, 0, 0.42);
+
     display: flex;
     align-items: flex-end;
     justify-content: center;
+
     z-index: 9999;
+
+    padding: 0;
 }
+
+
+/* Popup */
 
 .popup {
     width: 100%;
     max-width: 560px;
+
     background: white;
+
     border-radius: 30px 30px 0 0;
+
     padding: 38px 28px 30px;
+
     box-shadow: 0 -8px 30px rgba(0,0,0,0.18);
+
     animation: popupUp 0.35s ease-out;
 }
+
 
 @keyframes popupUp {
 
@@ -389,38 +345,67 @@ button {
 
 }
 
+
+/* Popup Icon */
+
 .popup-icon {
     width: 105px;
     height: 105px;
+
     margin: 0 auto 18px;
+
     border-radius: 28px;
+
     background: #16a34a;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
     font-size: 64px;
-    box-shadow: 0 10px 30px rgba(22,163,74,0.30);
+
+    box-shadow:
+        0 10px 30px rgba(22,163,74,0.30);
 }
+
+
+/* Popup Heading */
 
 .popup h2 {
     text-align: center;
+
     margin: 0 0 25px;
+
     font-size: 32px;
+
     font-weight: 800;
+
     color: #101b15;
 }
 
+
+/* Rules box */
+
 .rules {
     background: #eaf8f0;
+
     border-radius: 22px;
+
     padding: 18px 15px;
+
     margin-bottom: 28px;
 }
 
+
+/* Rule */
+
 .rule {
     display: flex;
+
     align-items: flex-start;
+
     gap: 14px;
+
     margin-bottom: 20px;
 }
 
@@ -428,17 +413,29 @@ button {
     margin-bottom: 0;
 }
 
+
+/* Rule Emoji */
+
 .rule-icon {
     width: 38px;
+
     flex-shrink: 0;
+
     font-size: 29px;
+
     line-height: 34px;
+
     text-align: center;
 }
 
+
+/* Rule text */
+
 .rule-text {
     font-size: 17px;
+
     line-height: 1.45;
+
     color: #617168;
 }
 
@@ -446,18 +443,31 @@ button {
     color: #122019;
 }
 
+
+/* Start popup button */
+
 .popup-start {
     background: #16b957;
+
     color: white;
+
     border-radius: 16px;
+
     padding: 17px;
+
     font-size: 19px;
+
     font-weight: 800;
-    box-shadow: 0 8px 22px rgba(22,185,87,0.25);
+
+    box-shadow:
+        0 8px 22px rgba(22,185,87,0.25);
+}
+
+.popup-start:active {
+    transform: scale(0.98);
 }
 
 </style>
-
 </head>
 
 
@@ -479,6 +489,7 @@ button {
     </div>
 
 </div>
+
 
 
 <div class="container">
@@ -504,6 +515,7 @@ button {
 
 
     <div class="steps">
+
 
         <div class="step active" id="stepWatch">
 
@@ -543,6 +555,7 @@ button {
 
         </div>
 
+
     </div>
 
 
@@ -558,11 +571,13 @@ button {
 </div>
 
 
+
 <!-- =========================
      TASK
 ========================= -->
 
 <div class="task-card" id="taskCard">
+
 
     <div class="task-title">
 
@@ -583,13 +598,11 @@ button {
 
     <div class="task-text">
 
-        Watch the task and complete the action inside it
-        to unlock your file.
+        Watch the ad and tap the button inside it to qualify.
+        Passive views don't count.
 
     </div>
 
-
-    <!-- START BUTTON -->
 
     <button
         class="start-btn"
@@ -601,69 +614,26 @@ button {
     </button>
 
 
-    <!-- ADSGRAM -->
+    <button
+        class="complete-btn hidden"
+        id="completeBtn"
+        onclick="completeTask()">
 
-    <div
-        class="ads-container hidden"
-        id="adsContainer">
+        ✅ Task Complete
 
+    </button>
 
-        <adsgram-task
-            class="adsgram-task"
-            id="adsTask"
-            data-block-id="49083"
-            data-debug="true"
-            data-debug-console="true">
-
-
-            <div
-                slot="reward"
-                class="ads-task-reward">
-
-                🎁 Complete the task to unlock the file
-
-            </div>
-
-
-            <div
-                slot="button"
-                class="ads-task-button">
-
-                ▶ Complete Task
-
-            </div>
-
-
-            <div
-                slot="claim"
-                class="ads-task-claim">
-
-                🎁 Claim Reward
-
-            </div>
-
-
-            <div
-                slot="done"
-                class="ads-task-done">
-
-                ✅ Task Completed
-
-            </div>
-
-
-        </adsgram-task>
-
-    </div>
 
 </div>
+
 
 
 <!-- =========================
      VERIFY
 ========================= -->
 
-<div class="verify-card" id="verifyCard">
+<div class="verify-card">
+
 
     <div class="verify-title">
 
@@ -700,7 +670,9 @@ button {
 
     </button>
 
+
 </div>
+
 
 
 <!-- =========================
@@ -730,15 +702,18 @@ button {
 </div>
 
 
-<!-- =========================
-     POPUP
-========================= -->
+
+<!-- ==================================================
+     HOW TO COMPLETE POPUP
+================================================== -->
 
 <div
     class="popup-overlay"
     id="popupOverlay">
 
+
     <div class="popup">
+
 
         <div class="popup-icon">
             ✅
@@ -753,6 +728,8 @@ button {
         <div class="rules">
 
 
+            <!-- RULE 1 -->
+
             <div class="rule">
 
                 <div class="rule-icon">
@@ -762,16 +739,18 @@ button {
                 <div class="rule-text">
 
                     <strong>
-                        Complete the task.
+                        Click the action button.
                     </strong>
 
-                    Follow the action shown
-                    in the AdsGram task.
+                    Watching isn't enough —
+                    tap the button inside the ad.
 
                 </div>
 
             </div>
 
+
+            <!-- RULE 2 -->
 
             <div class="rule">
 
@@ -782,16 +761,18 @@ button {
                 <div class="rule-text">
 
                     <strong>
-                        Complete it properly.
+                        Watch the full ad
                     </strong>
 
-                    The task must be successfully
-                    completed to unlock the file.
+                    before interacting.
+                    Closing early may fail verification.
 
                 </div>
 
             </div>
 
+
+            <!-- RULE 3 -->
 
             <div class="rule">
 
@@ -805,8 +786,8 @@ button {
                         Expires in 5 min.
                     </strong>
 
-                    Complete the task within
-                    the verification window.
+                    Complete every step
+                    within the window.
 
                 </div>
 
@@ -824,27 +805,30 @@ button {
 
         </button>
 
+
     </div>
 
 </div>
 
 
+
 <script>
+
 
 /* =========================
    TELEGRAM
 ========================= */
 
-const tg = window.Telegram?.WebApp;
+const tg = window.Telegram.WebApp;
 
-if (tg) {
-    tg.ready();
-    tg.expand();
-}
+tg.ready();
+
+tg.expand();
+
 
 
 /* =========================
-   URL PARAMETERS
+   FILE CODE
 ========================= */
 
 const params =
@@ -852,78 +836,42 @@ const params =
         window.location.search
     );
 
-
 const fileCode =
     params.get("file");
 
+/*
+   Session token is created by the bot.
+   It is used so one verification cycle
+   cannot be reused.
+*/
 
-/* =========================
-   ELEMENTS
-========================= */
+const sessionToken =
+    params.get("session");
 
-const timerElement =
-    document.getElementById("timer");
-
-const barFill =
-    document.getElementById("barFill");
-
-const startBtn =
-    document.getElementById("startBtn");
-
-const adsContainer =
-    document.getElementById("adsContainer");
-
-const adsTask =
-    document.getElementById("adsTask");
-
-const statusElement =
-    document.getElementById("status");
-
-const verifyBtn =
-    document.getElementById("verifyBtn");
-
-const verifyText =
-    document.getElementById("verifyText");
-
-const locked =
-    document.getElementById("locked");
-
-const count =
-    document.getElementById("count");
 
 
 /* =========================
-   STATE
+   5 MINUTE TIMER
 ========================= */
 
 let timeLeft = 300;
 
-let taskStarted = false;
 
-let taskCompleted = false;
-
-
-/* =========================
-   POPUP
-========================= */
-
-function closePopup() {
-
-    document
-        .getElementById("popupOverlay")
-        .classList.add("hidden");
-
-}
+const timerElement =
+    document.getElementById("timer");
 
 
-/* =========================
-   TIMER
-========================= */
+const barFill =
+    document.getElementById("barFill");
+
+
 
 const timerInterval =
     setInterval(() => {
 
+
         timeLeft--;
+
 
         if (timeLeft <= 0) {
 
@@ -931,26 +879,34 @@ const timerInterval =
 
             clearInterval(timerInterval);
 
+
             timerElement.innerText =
                 "Verification expired";
+
 
             timerElement.classList.add(
                 "expired"
             );
 
-            startBtn.disabled = true;
 
-            if (adsTask) {
-                adsTask.style.pointerEvents = "none";
-                adsTask.style.opacity = "0.5";
-            }
+            document.getElementById(
+                "startBtn"
+            ).disabled = true;
+
+
+            document.getElementById(
+                "completeBtn"
+            ).disabled = true;
+
 
             return;
+
         }
 
 
         const minutes =
             Math.floor(timeLeft / 60);
+
 
         const seconds =
             timeLeft % 60;
@@ -974,6 +930,21 @@ const timerInterval =
     }, 1000);
 
 
+
+/* =========================
+   CLOSE POPUP
+========================= */
+
+function closePopup() {
+
+    document
+        .getElementById("popupOverlay")
+        .classList.add("hidden");
+
+}
+
+
+
 /* =========================
    START TASK
 ========================= */
@@ -985,137 +956,29 @@ function startTask() {
     }
 
 
-    taskStarted = true;
-
-
-    startBtn.classList.add(
-        "hidden"
-    );
-
-
-    adsContainer.classList.remove(
-        "hidden"
-    );
-
-
-    statusElement.innerText =
-        "IN PROGRESS";
-
-
-    statusElement.style.background =
-        "#dcfce7";
-
-
-    statusElement.style.color =
-        "#15803d";
+    document
+        .getElementById("startBtn")
+        .classList.add("hidden");
 
 
     document
-        .getElementById("stepWatch")
-        .classList.add("active");
-
-}
+        .getElementById("completeBtn")
+        .classList.remove("hidden");
 
 
-/* =========================
-   ADSGRAM LISTENERS
-========================= */
-
-if (adsTask) {
-
-    adsTask.addEventListener(
-        "reward",
-        function(event) {
-
-            console.log(
-                "AdsGram reward:",
-                event.detail
-            );
-
-            taskCompleted = true;
-
-            markTaskCompleted();
-
-        }
-    );
-
-    adsTask.addEventListener(
-        "onError",
-        function(event) {
-
-            console.log(
-                "AdsGram error:",
-                event.detail
-            );
-
-            alert(
-                "Task load nahi ho paaya. Please try again."
-            );
-
-        }
-    );
-
-    adsTask.addEventListener(
-        "onBannerNotFound",
-        function(event) {
-
-            console.log(
-                "AdsGram task not found:",
-                event.detail
-            );
-
-            alert(
-                "Abhi koi task available nahi hai. Please thodi der baad try karein."
-            );
-
-        }
-    );
-
-    adsTask.addEventListener(
-        "onTooLongSession",
-        function(event) {
-
-            console.log(
-                "AdsGram session too long:",
-                event.detail
-            );
-
-            alert(
-                "Verification session expire ho gaya. Mini App ko dobara open karein."
-            );
-
-        }
-    );
-
-}
+    document
+        .getElementById("status")
+        .innerText = "IN PROGRESS";
 
 
-/* =========================
-   TASK COMPLETED
-========================= */
-
-function markTaskCompleted() {
-
-    if (timeLeft <= 0) {
-        return;
-    }
+    document
+        .getElementById("status")
+        .style.background = "#dcfce7";
 
 
-    if (taskCompleted !== true) {
-        return;
-    }
-
-
-    statusElement.innerText =
-        "COMPLETED";
-
-
-    statusElement.style.background =
-        "#dcfce7";
-
-
-    statusElement.style.color =
-        "#15803d";
+    document
+        .getElementById("status")
+        .style.color = "#15803d";
 
 
     document
@@ -1127,54 +990,17 @@ function markTaskCompleted() {
         .getElementById("stepVerify")
         .classList.add("active");
 
-
-    count.innerText =
-        "1 / 1";
-
-
-    locked.innerText =
-        "UNLOCKED";
-
-
-    locked.style.background =
-        "#dcfce7";
-
-
-    locked.style.color =
-        "#15803d";
-
-
-    verifyText.innerText =
-        "Task completed successfully. You can now verify and get your file.";
-
-
-    verifyBtn.disabled =
-        false;
-
-
-    verifyBtn.classList.add(
-        "enabled"
-    );
-
-
-    verifyBtn.onclick =
-        sendFileRequest;
-
 }
 
 
+
 /* =========================
-   VERIFY & SEND FILE
+   TASK COMPLETE
 ========================= */
 
-function sendFileRequest() {
+function completeTask() {
 
     if (timeLeft <= 0) {
-
-        alert(
-            "Verification session expired."
-        );
-
         return;
     }
 
@@ -1189,19 +1015,34 @@ function sendFileRequest() {
     }
 
 
+    if (!sessionToken) {
+
+        alert(
+            "Verification session missing."
+        );
+
+        return;
+    }
+
+
     document
-        .getElementById("taskCard")
+        .getElementById("completeBtn")
         .classList.add("hidden");
 
 
     document
-        .getElementById("verifyCard")
-        .classList.add("hidden");
+        .getElementById("status")
+        .innerText = "COMPLETED";
 
 
     document
-        .getElementById("successBox")
-        .classList.remove("hidden");
+        .getElementById("status")
+        .style.background = "#dcfce7";
+
+
+    document
+        .getElementById("status")
+        .style.color = "#15803d";
 
 
     document
@@ -1214,26 +1055,115 @@ function sendFileRequest() {
         .classList.add("active");
 
 
+    document
+        .getElementById("count")
+        .innerText = "1 / 1";
+
+
+    document
+        .getElementById("locked")
+        .innerText = "UNLOCKED";
+
+
+    document
+        .getElementById("locked")
+        .style.background = "#dcfce7";
+
+
+    document
+        .getElementById("locked")
+        .style.color = "#15803d";
+
+
+    document
+        .getElementById("verifyText")
+        .innerText =
+        "Verification completed.";
+
+
+    document
+        .getElementById("verifyBtn")
+        .disabled = false;
+
+
+    document
+        .getElementById("verifyBtn")
+        .style.background = "#16a34a";
+
+
+    document
+        .getElementById("verifyBtn")
+        .style.color = "white";
+
+
+    document
+        .getElementById("verifyBtn")
+        .onclick =
+        sendFileRequest;
+
+}
+
+
+
+/* =========================
+   SEND FILE REQUEST
+========================= */
+
+function sendFileRequest() {
+
+    if (!fileCode) {
+        return;
+    }
+
+
+    if (!sessionToken) {
+
+        alert(
+            "Verification session missing."
+        );
+
+        return;
+    }
+
+
+    document
+        .getElementById("taskCard")
+        .classList.add("hidden");
+
+
+    document
+        .getElementById("verifyBtn")
+        .classList.add("hidden");
+
+
+    document
+        .getElementById("successBox")
+        .classList.remove("hidden");
+
+
+    /*
+       Send both file code and the unique
+       verification session to the bot.
+    */
+
     const botLink =
         "https://t.me/IndoSharebot?start=complete_" +
-        encodeURIComponent(fileCode);
+        encodeURIComponent(fileCode) +
+        "_" +
+        encodeURIComponent(sessionToken);
 
 
     setTimeout(() => {
 
-        if (tg && tg.openTelegramLink) {
-            tg.openTelegramLink(botLink);
-            tg.close();
-        } else {
-            window.location.href = botLink;
-        }
+        window.location.href =
+            botLink;
 
     }, 700);
 
 }
 
+
 </script>
 
 </body>
-
-</html>
+      </html>
