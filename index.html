@@ -13,8 +13,10 @@
 <!-- Telegram WebApp -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-<!-- AdsGram -->
-<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+<!-- Monetag Rewarded Interstitial SDK -->
+<script src="https://libtl.com/sdk.js"
+        data-zone="11805997"
+        data-sdk="show_11805997"></script>
 
 
 <style>
@@ -664,7 +666,7 @@ button {
     <div class="popup">
 
         <div class="popup-icon">
-            ✅
+            📺
         </div>
 
 
@@ -707,7 +709,7 @@ button {
                         Complete it properly.
                     </strong>
 
-                    The reward is given only after
+                    The reward is given after
                     the rewarded ad finishes.
 
                 </div>
@@ -808,20 +810,6 @@ const message =
 
 
 /* =========================
-   ADSGRAM REWARD BLOCK
-========================= */
-
-/*
-   IMPORTANT:
-   49083 is your AdsGram Reward Block ID.
-*/
-
-const ADSGRAM_BLOCK_ID = "49083";
-
-let AdController = null;
-
-
-/* =========================
    STATE
 ========================= */
 
@@ -832,60 +820,6 @@ let taskStarted = false;
 let taskCompleted = false;
 
 let sending = false;
-
-
-/* =========================
-   ADSGRAM INITIALIZE
-========================= */
-
-function initializeAdsGram() {
-
-    try {
-
-        if (
-            !window.Adsgram ||
-            typeof window.Adsgram.init !== "function"
-        ) {
-
-            showMessage(
-                "AdsGram load nahi hua. Please Mini App ko dobara open karein.",
-                "error"
-            );
-
-            return false;
-        }
-
-
-        AdController =
-            window.Adsgram.init({
-                blockId: ADSGRAM_BLOCK_ID
-            });
-
-
-        console.log(
-            "AdsGram initialized:",
-            ADSGRAM_BLOCK_ID
-        );
-
-
-        return true;
-
-    } catch (error) {
-
-        console.error(
-            "AdsGram initialization error:",
-            error
-        );
-
-        showMessage(
-            "AdsGram initialize nahi ho paaya. Please try again.",
-            "error"
-        );
-
-        return false;
-    }
-
-}
 
 
 /* =========================
@@ -941,6 +875,11 @@ const timerInterval =
 
             verifyBtn.disabled = true;
 
+            showMessage(
+                "Verification session expired. Please open the file link again.",
+                "error"
+            );
+
             return;
         }
 
@@ -971,7 +910,7 @@ const timerInterval =
 
 
 /* =========================
-   START TASK / SHOW REWARD AD
+   START MONETAG REWARDED AD
 ========================= */
 
 async function startTask() {
@@ -979,7 +918,7 @@ async function startTask() {
     if (timeLeft <= 0) {
 
         showMessage(
-            "Verification session expired. Mini App ko dobara open karein.",
+            "Verification session expired. Please open the file link again.",
             "error"
         );
 
@@ -987,7 +926,25 @@ async function startTask() {
     }
 
 
-    if (taskStarted) {
+    if (taskStarted || taskCompleted) {
+        return;
+    }
+
+
+    /*
+       Check whether Monetag SDK
+       has loaded correctly.
+    */
+
+    if (
+        typeof window.show_11805997 !== "function"
+    ) {
+
+        showMessage(
+            "Advertisement is still loading. Please wait a moment and try again.",
+            "error"
+        );
+
         return;
     }
 
@@ -1017,45 +974,27 @@ async function startTask() {
     );
 
 
-    if (!AdController) {
-
-        const initialized =
-            initializeAdsGram();
-
-        if (!initialized) {
-
-            resetAdButton();
-
-            return;
-        }
-
-    }
-
-
     try {
 
         /*
-           AdsGram Rewarded Ad.
+           Monetag Rewarded Interstitial.
 
-           Reward callback tab execute hoga
-           jab Reward Ad successfully complete
-           ho jayega.
+           The .then() block executes after
+           the rewarded ad flow is completed.
         */
 
         const result =
-            await AdController.show();
+            await window.show_11805997();
 
 
         console.log(
-            "AdsGram result:",
+            "Monetag Rewarded Interstitial result:",
             result
         );
 
 
         /*
-           Reward format:
-           show() resolves when the rewarded
-           advertisement has completed.
+           AD COMPLETED
         */
 
         taskCompleted = true;
@@ -1066,7 +1005,7 @@ async function startTask() {
     } catch (error) {
 
         console.error(
-            "AdsGram show error:",
+            "Monetag Rewarded Interstitial error:",
             error
         );
 
@@ -1085,46 +1024,20 @@ async function startTask() {
             "#9a6b00";
 
 
-        resetAdButton();
+        startBtn.disabled =
+            false;
 
 
-        let errorText =
-            "Ad complete nahi hua. Please try again.";
-
-
-        if (
-            error &&
-            error.description
-        ) {
-
-            console.log(
-                "AdsGram description:",
-                error.description
-            );
-
-        }
+        startBtn.innerText =
+            "▶ Watch Ad & Unlock";
 
 
         showMessage(
-            errorText,
+            "Ad complete nahi hua. Please dobara try karein.",
             "error"
         );
 
     }
-
-}
-
-
-/* =========================
-   RESET AD BUTTON
-========================= */
-
-function resetAdButton() {
-
-    startBtn.disabled = false;
-
-    startBtn.innerText =
-        "▶ Watch Ad & Unlock";
 
 }
 
@@ -1227,6 +1140,16 @@ function sendFileRequest() {
     }
 
 
+    if (!taskCompleted) {
+
+        alert(
+            "Please complete the advertisement first."
+        );
+
+        return;
+    }
+
+
     if (timeLeft <= 0) {
 
         alert(
@@ -1281,13 +1204,7 @@ function sendFileRequest() {
 
 
     /*
-       Return to the bot.
-
-       Your current bot.py must support:
-
-       /start complete_FILECODE
-
-       or equivalent start parameter handling.
+       Return to Telegram bot.
     */
 
     setTimeout(() => {
@@ -1301,7 +1218,7 @@ function sendFileRequest() {
 
 
 /* =========================
-   INITIAL LOAD
+   INITIAL CHECK
 ========================= */
 
 window.addEventListener(
@@ -1309,11 +1226,21 @@ window.addEventListener(
     () => {
 
         /*
-           Initialize AdsGram after
-           the page has loaded.
+           Monetag SDK is loaded from <head>.
+           We do NOT show an ad automatically.
+
+           Ad starts ONLY when the user taps:
+           "Watch Ad & Unlock"
         */
 
-        initializeAdsGram();
+        console.log(
+            "Indo Share + Monetag loaded."
+        );
+
+        console.log(
+            "Monetag function available:",
+            typeof window.show_11805997
+        );
 
     }
 );
@@ -1322,4 +1249,4 @@ window.addEventListener(
 
 </body>
 
-              </html>
+      </html>
