@@ -73,7 +73,7 @@ body {
 
 
 /* =========================
-   PROGRESS
+   PROGRESS CARD
 ========================= */
 
 .progress-card {
@@ -189,7 +189,7 @@ body {
 
 
 /* =========================
-   BUTTONS
+   BUTTON
 ========================= */
 
 button {
@@ -265,6 +265,11 @@ button {
     color: white;
 }
 
+.verify-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
 
 /* =========================
    SUCCESS
@@ -312,6 +317,12 @@ button {
     display: block;
     background: #e0f2fe;
     color: #0369a1;
+}
+
+.message.success-message {
+    display: block;
+    background: #dcfce7;
+    color: #15803d;
 }
 
 
@@ -536,7 +547,7 @@ button {
 
 
 <!-- =========================
-     TASK
+     TASK CARD
 ========================= -->
 
 <div class="task-card" id="taskCard">
@@ -558,7 +569,9 @@ button {
     </div>
 
 
-    <div class="task-text" id="taskText">
+    <div
+        class="task-text"
+        id="taskText">
 
         Watch the advertisement completely
         to unlock your file.
@@ -568,8 +581,7 @@ button {
 
     <button
         class="start-btn"
-        id="startBtn"
-        onclick="startTask()">
+        id="startBtn">
 
         ▶ Watch Ad & Unlock
 
@@ -585,7 +597,7 @@ button {
 
 
 <!-- =========================
-     VERIFY
+     VERIFY CARD
 ========================= -->
 
 <div class="verify-card" id="verifyCard">
@@ -646,7 +658,8 @@ button {
     </h2>
 
     <p>
-        Your file is being sent...
+        Verification successful.
+        Please wait while the bot processes your file.
     </p>
 
 </div>
@@ -741,7 +754,7 @@ button {
 
         <button
             class="popup-start"
-            onclick="closePopup()">
+            id="popupStartBtn">
 
             ✓ Got it, Let's Start!
 
@@ -754,9 +767,9 @@ button {
 
 <script>
 
-/* =========================
-   TELEGRAM
-========================= */
+/* ============================================================
+   TELEGRAM WEB APP
+============================================================ */
 
 const tg = window.Telegram.WebApp;
 
@@ -764,22 +777,22 @@ tg.ready();
 tg.expand();
 
 
-/* =========================
+/* ============================================================
    URL PARAMETERS
-========================= */
+============================================================ */
 
-const params =
-    new URLSearchParams(
-        window.location.search
-    );
+const params = new URLSearchParams(
+    window.location.search
+);
 
-const fileCode =
-    params.get("file");
+const fileCode = params.get("file");
+
+const sessionId = params.get("session");
 
 
-/* =========================
+/* ============================================================
    ELEMENTS
-========================= */
+============================================================ */
 
 const timerElement =
     document.getElementById("timer");
@@ -808,10 +821,16 @@ const count =
 const message =
     document.getElementById("message");
 
+const popupOverlay =
+    document.getElementById("popupOverlay");
 
-/* =========================
+const popupStartBtn =
+    document.getElementById("popupStartBtn");
+
+
+/* ============================================================
    STATE
-========================= */
+============================================================ */
 
 let timeLeft = 300;
 
@@ -821,23 +840,49 @@ let taskCompleted = false;
 
 let sending = false;
 
+let expired = false;
 
-/* =========================
-   POPUP
-========================= */
 
-function closePopup() {
+/* ============================================================
+   BASIC SESSION VALIDATION
+============================================================ */
 
-    document
-        .getElementById("popupOverlay")
-        .classList.add("hidden");
+if (!fileCode || !sessionId) {
+
+    startBtn.disabled = true;
+
+    verifyBtn.disabled = true;
+
+    showMessage(
+        "❌ Verification session missing hai. Please file link se dobara open karein.",
+        "error"
+    );
 
 }
 
 
-/* =========================
+/* ============================================================
+   POPUP
+============================================================ */
+
+function closePopup() {
+
+    popupOverlay.classList.add(
+        "hidden"
+    );
+
+}
+
+
+popupStartBtn.addEventListener(
+    "click",
+    closePopup
+);
+
+
+/* ============================================================
    MESSAGE
-========================= */
+============================================================ */
 
 function showMessage(text, type) {
 
@@ -849,73 +894,78 @@ function showMessage(text, type) {
 }
 
 
-/* =========================
+/* ============================================================
    TIMER
-========================= */
+============================================================ */
 
-const timerInterval =
-    setInterval(() => {
+const timerInterval = setInterval(() => {
 
-        timeLeft--;
+    if (expired) {
+        return;
+    }
 
-        if (timeLeft <= 0) {
+    timeLeft--;
 
-            timeLeft = 0;
+    if (timeLeft <= 0) {
 
-            clearInterval(timerInterval);
+        timeLeft = 0;
 
-            timerElement.innerText =
-                "Verification expired";
+        expired = true;
 
-            timerElement.classList.add(
-                "expired"
-            );
-
-            startBtn.disabled = true;
-
-            verifyBtn.disabled = true;
-
-            showMessage(
-                "Verification session expired. Please open the file link again.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        const minutes =
-            Math.floor(timeLeft / 60);
-
-        const seconds =
-            timeLeft % 60;
-
+        clearInterval(timerInterval);
 
         timerElement.innerText =
-            "Expires in " +
-            minutes +
-            ":" +
-            String(seconds).padStart(2, "0");
+            "Verification expired";
+
+        timerElement.classList.add(
+            "expired"
+        );
+
+        startBtn.disabled = true;
+
+        verifyBtn.disabled = true;
+
+        showMessage(
+            "Verification session expired. Please open the file link again.",
+            "error"
+        );
+
+        return;
+    }
 
 
-        const percentage =
-            (timeLeft / 300) * 100;
+    const minutes =
+        Math.floor(timeLeft / 60);
+
+    const seconds =
+        timeLeft % 60;
 
 
-        barFill.style.width =
-            percentage + "%";
+    timerElement.innerText =
+        "Expires in " +
+        minutes +
+        ":" +
+        String(seconds).padStart(2, "0");
 
 
-    }, 1000);
+    const percentage =
+        (timeLeft / 300) * 100;
 
 
-/* =========================
+    barFill.style.width =
+        percentage + "%";
+
+
+}, 1000);
+
+
+/* ============================================================
    START MONETAG REWARDED AD
-========================= */
+============================================================ */
 
 async function startTask() {
 
-    if (timeLeft <= 0) {
+    if (expired || timeLeft <= 0) {
 
         showMessage(
             "Verification session expired. Please open the file link again.",
@@ -931,10 +981,20 @@ async function startTask() {
     }
 
 
-    /*
-       Check whether Monetag SDK
-       has loaded correctly.
-    */
+    if (!fileCode || !sessionId) {
+
+        showMessage(
+            "Verification session missing hai. Please file link se dobara open karein.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    /* --------------------------------------------------------
+       Check Monetag SDK
+    -------------------------------------------------------- */
 
     if (
         typeof window.show_11805997 !== "function"
@@ -977,11 +1037,11 @@ async function startTask() {
     try {
 
         /*
-           Monetag Rewarded Interstitial.
-
-           The .then() block executes after
-           the rewarded ad flow is completed.
-        */
+         * Monetag Rewarded Interstitial
+         *
+         * Rewarded ad completion ke baad
+         * promise resolve hona expected hai.
+         */
 
         const result =
             await window.show_11805997();
@@ -993,9 +1053,15 @@ async function startTask() {
         );
 
 
-        /*
+        /* ----------------------------------------------------
            AD COMPLETED
-        */
+        ---------------------------------------------------- */
+
+        if (expired || timeLeft <= 0) {
+
+            return;
+        }
+
 
         taskCompleted = true;
 
@@ -1042,13 +1108,23 @@ async function startTask() {
 }
 
 
-/* =========================
+/* ============================================================
+   START BUTTON
+============================================================ */
+
+startBtn.addEventListener(
+    "click",
+    startTask
+);
+
+
+/* ============================================================
    TASK COMPLETED
-========================= */
+============================================================ */
 
 function markTaskCompleted() {
 
-    if (timeLeft <= 0) {
+    if (expired || timeLeft <= 0) {
         return;
     }
 
@@ -1117,53 +1193,52 @@ function markTaskCompleted() {
     );
 
 
-    verifyBtn.onclick =
-        sendFileRequest;
-
-
     showMessage(
         "✅ Advertisement completed! Ab Verify & Confirm par click karein.",
-        "info"
+        "success-message"
     );
 
 }
 
 
-/* =========================
-   VERIFY & SEND FILE
-========================= */
+/* ============================================================
+   VERIFY & SEND SESSION DATA TO BOT
+============================================================ */
 
-function sendFileRequest() {
+function sendVerification() {
 
     if (sending) {
         return;
     }
 
 
+    if (expired || timeLeft <= 0) {
+
+        showMessage(
+            "Verification session expired. Please open the file link again.",
+            "error"
+        );
+
+        return;
+    }
+
+
     if (!taskCompleted) {
 
-        alert(
-            "Please complete the advertisement first."
+        showMessage(
+            "Please complete the advertisement first.",
+            "error"
         );
 
         return;
     }
 
 
-    if (timeLeft <= 0) {
+    if (!fileCode || !sessionId) {
 
-        alert(
-            "Verification session expired."
-        );
-
-        return;
-    }
-
-
-    if (!fileCode) {
-
-        alert(
-            "File code missing."
+        showMessage(
+            "Verification session missing hai. Please file link se dobara open karein.",
+            "error"
         );
 
         return;
@@ -1173,80 +1248,4 @@ function sendFileRequest() {
     sending = true;
 
 
-    document
-        .getElementById("taskCard")
-        .classList.add("hidden");
-
-
-    document
-        .getElementById("verifyCard")
-        .classList.add("hidden");
-
-
-    document
-        .getElementById("successBox")
-        .classList.remove("hidden");
-
-
-    document
-        .getElementById("stepVerify")
-        .classList.add("done");
-
-
-    document
-        .getElementById("stepDone")
-        .classList.add("active");
-
-
-    const botLink =
-        "https://t.me/IndoSharebot?start=complete_" +
-        encodeURIComponent(fileCode);
-
-
-    /*
-       Return to Telegram bot.
-    */
-
-    setTimeout(() => {
-
-        window.location.href =
-            botLink;
-
-    }, 700);
-
-}
-
-
-/* =========================
-   INITIAL CHECK
-========================= */
-
-window.addEventListener(
-    "load",
-    () => {
-
-        /*
-           Monetag SDK is loaded from <head>.
-           We do NOT show an ad automatically.
-
-           Ad starts ONLY when the user taps:
-           "Watch Ad & Unlock"
-        */
-
-        console.log(
-            "Indo Share + Monetag loaded."
-        );
-
-        console.log(
-            "Monetag function available:",
-            typeof window.show_11805997
-        );
-
-    }
-);
-
-</script>
-
-</body>
-
-      </html>
+    ver
