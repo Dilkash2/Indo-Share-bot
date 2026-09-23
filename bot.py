@@ -1,7 +1,5 @@
 import os
 import asyncio
-import json
-import uuid
 import psycopg2
 
 from telegram import (
@@ -15,7 +13,6 @@ from telegram.ext import (
     Application,
     CommandHandler,
     MessageHandler,
-    CallbackQueryHandler,
     ContextTypes,
     filters,
 )
@@ -23,9 +20,9 @@ from telegram.ext import (
 from telegram.error import TelegramError
 
 
-# ============================================================
+# =========================
 # SETTINGS
-# ============================================================
+# =========================
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
@@ -35,9 +32,9 @@ MINI_APP_URL = "https://dilkash2.github.io/Indo-Share-bot/"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 
-# ============================================================
+# =========================
 # DATABASE CONNECTION
-# ============================================================
+# =========================
 
 def get_connection():
 
@@ -48,7 +45,7 @@ def get_connection():
 
     database_url = DATABASE_URL
 
-    # Render/PostgreSQL ke kuch URLs old format mein hote hain
+    # Kuch services old postgres:// format deti hain
     if database_url.startswith("postgres://"):
         database_url = database_url.replace(
             "postgres://",
@@ -59,18 +56,15 @@ def get_connection():
     return psycopg2.connect(database_url)
 
 
-# ============================================================
-# CREATE DATABASE TABLES
-# ============================================================
+# =========================
+# CREATE TABLE
+# =========================
 
 def init_db():
 
     conn = get_connection()
-    cur = conn.cursor()
 
-    # --------------------------------------------------------
-    # FILES TABLE
-    # --------------------------------------------------------
+    cur = conn.cursor()
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS files (
@@ -80,51 +74,20 @@ def init_db():
         )
     """)
 
-    # --------------------------------------------------------
-    # VERIFICATION SESSIONS TABLE
-    # --------------------------------------------------------
-    #
-    # Har original file-link click par ek NEW session banta hai.
-    #
-    # session_id:
-    #     Unique verification session
-    #
-    # user_id:
-    #     Telegram user
-    #
-    # file_code:
-    #     Kis file ke liye verification ho rahi hai
-    #
-    # completed:
-    #     Verification complete hui ya nahi
-    #
-    # --------------------------------------------------------
-
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS verification_sessions (
-            id SERIAL PRIMARY KEY,
-            session_id TEXT UNIQUE NOT NULL,
-            user_id BIGINT NOT NULL,
-            file_code TEXT NOT NULL,
-            completed BOOLEAN NOT NULL DEFAULT FALSE,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            completed_at TIMESTAMP NULL
-        )
-    """)
-
     conn.commit()
 
     cur.close()
     conn.close()
 
 
-# ============================================================
+# =========================
 # SAVE FILE
-# ============================================================
+# =========================
 
 def save_file(code, file_id):
 
     conn = get_connection()
+
     cur = conn.cursor()
 
     cur.execute("""
@@ -140,21 +103,18 @@ def save_file(code, file_id):
     conn.close()
 
 
-# ============================================================
+# =========================
 # GET FILE
-# ============================================================
+# =========================
 
 def get_file(code):
 
     conn = get_connection()
+
     cur = conn.cursor()
 
     cur.execute(
-        """
-        SELECT file_id
-        FROM files
-        WHERE code = %s
-        """,
+        "SELECT file_id FROM files WHERE code = %s",
         (code,)
     )
 
@@ -169,119 +129,9 @@ def get_file(code):
     return None
 
 
-# ============================================================
-# CREATE VERIFICATION SESSION
-# ============================================================
-
-def create_verification_session(
-    user_id,
-    file_code
-):
-
-    session_id = uuid.uuid4().hex
-
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute("""
-        INSERT INTO verification_sessions
-        (
-            session_id,
-            user_id,
-            file_code,
-            completed
-        )
-        VALUES (%s, %s, %s, FALSE)
-    """, (
-        session_id,
-        user_id,
-        file_code
-    ))
-
-    conn.commit()
-
-    cur.close()
-    conn.close()
-
-    return session_id
-
-
-# ============================================================
-# GET SESSION
-# ============================================================
-
-def get_session(session_id):
-
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute("""
-        SELECT
-            session_id,
-            user_id,
-            file_code,
-            completed
-        FROM verification_sessions
-        WHERE session_id = %s
-    """, (session_id,))
-
-    result = cur.fetchone()
-
-    cur.close()
-    conn.close()
-
-    return result
-
-
-# ============================================================
-# COMPLETE SESSION
-# ============================================================
-
-def complete_session(
-    session_id,
-    user_id,
-    file_code
-):
-
-    conn = get_connection()
-    cur = conn.cursor()
-
-    # --------------------------------------------------------
-    # Atomic update
-    #
-    # Agar session pehle hi complete hai,
-    # to dobara UPDATE nahi hoga.
-    # --------------------------------------------------------
-
-    cur.execute("""
-        UPDATE verification_sessions
-        SET
-            completed = TRUE,
-            completed_at = CURRENT_TIMESTAMP
-        WHERE
-            session_id = %s
-            AND user_id = %s
-            AND file_code = %s
-            AND completed = FALSE
-    """, (
-        session_id,
-        user_id,
-        file_code
-    ))
-
-    updated_rows = cur.rowcount
-
-    conn.commit()
-
-    cur.close()
-    conn.close()
-
-    return updated_rows > 0
-
-
-# ============================================================
-# START COMMAND
-# ============================================================
+# =========================
+# START
+# =========================
 
 async def start(
     update: Update,
@@ -291,14 +141,11 @@ async def start(
     if not update.message:
         return
 
-    if not update.effective_user:
-        return
-
     args = context.args
 
-    # ========================================================
+    # =========================
     # NORMAL /START
-    # ========================================================
+    # =========================
 
     if not args:
 
@@ -311,14 +158,10 @@ async def start(
 
     code = args[0]
 
-    # ========================================================
-    # OLD COMPLETE LINK SUPPORT
-    # ========================================================
-    #
-    # Purane complete_ links ko completely remove nahi kiya.
-    # Lekin ab recommended flow session-based hai.
-    #
-    # ========================================================
+
+    # =========================
+    # COMPLETED FILE REQUEST
+    # =========================
 
     if code.startswith("complete_"):
 
@@ -346,9 +189,10 @@ async def start(
 
         return
 
-    # ========================================================
-    # CHECK FILE
-    # ========================================================
+
+    # =========================
+    # NORMAL FILE LINK
+    # =========================
 
     file_id = get_file(code)
 
@@ -360,43 +204,10 @@ async def start(
 
         return
 
-    # ========================================================
-    # CREATE NEW SESSION
-    # ========================================================
-    #
-    # IMPORTANT:
-    #
-    # Original file link dobara click karne par NEW session
-    # milega.
-    #
-    # Isliye:
-    #
-    # Same Mini App/session
-    #       = same session_id
-    #
-    # Original file link dobara
-    #       = new session_id
-    #
-    # ========================================================
 
-    session_id = create_verification_session(
-        update.effective_user.id,
-        code
-    )
-
-    # ========================================================
-    # MINI APP URL
-    # ========================================================
-
-    mini_app_url = (
-        f"{MINI_APP_URL}"
-        f"?file={code}"
-        f"&session={session_id}"
-    )
-
-    # ========================================================
-    # WATCH AD & UNLOCK BUTTON
-    # ========================================================
+    # =========================
+    # MINI APP BUTTON
+    # =========================
 
     keyboard = InlineKeyboardMarkup([
 
@@ -404,16 +215,17 @@ async def start(
             InlineKeyboardButton(
                 "📥 Watch Ad & Unlock",
                 web_app=WebAppInfo(
-                    url=mini_app_url
+                    url=f"{MINI_APP_URL}?file={code}"
                 )
             )
         ]
 
     ])
 
-    # ========================================================
-    # SEND MESSAGE
-    # ========================================================
+
+    # =========================
+    # SEND ONE QUICK STEP
+    # =========================
 
     await update.message.reply_text(
 
@@ -425,298 +237,9 @@ async def start(
     )
 
 
-# ============================================================
-# WEB APP DATA
-# ============================================================
-
-async def web_app_data_handler(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    if not update.message:
-        return
-
-    if not update.effective_user:
-        return
-
-    web_app_data = update.message.web_app_data
-
-    if not web_app_data:
-        return
-
-    raw_data = web_app_data.data
-
-    # ========================================================
-    # PARSE DATA
-    # ========================================================
-
-    try:
-
-        data = json.loads(raw_data)
-
-    except (json.JSONDecodeError, TypeError):
-
-        # ----------------------------------------------------
-        # Agar Mini App simple string bheje
-        # ----------------------------------------------------
-
-        data = {
-            "session_id": raw_data
-        }
-
-    # ========================================================
-    # DATA
-    # ========================================================
-
-    session_id = data.get("session_id")
-    file_code = data.get("file_code")
-    action = data.get("action")
-
-    # ========================================================
-    # VALIDATION
-    # ========================================================
-
-    if not session_id:
-
-        await update.message.reply_text(
-            "❌ Verification session missing hai."
-        )
-
-        return
-
-    # ========================================================
-    # SESSION DATABASE SE GET
-    # ========================================================
-
-    session = get_session(session_id)
-
-    if not session:
-
-        await update.message.reply_text(
-            "❌ Verification Session missing hai.\n\n"
-            "नई verification के लिए वापस जाकर file link पर क्लिक करें।"
-        )
-
-        return
-
-    (
-        saved_session_id,
-        saved_user_id,
-        saved_file_code,
-        completed
-    ) = session
-
-    # ========================================================
-    # USER CHECK
-    # ========================================================
-
-    if saved_user_id != update.effective_user.id:
-
-        await update.message.reply_text(
-            "❌ यह verification session इस user के लिए valid नहीं है।"
-        )
-
-        return
-
-    # ========================================================
-    # FILE CODE CHECK
-    # ========================================================
-
-    if file_code and file_code != saved_file_code:
-
-        await update.message.reply_text(
-            "❌ Verification session और file match नहीं कर रहे हैं।"
-        )
-
-        return
-
-    # ========================================================
-    # ONLY VERIFY ACTION
-    # ========================================================
-
-    if action and action != "verify":
-
-        await update.message.reply_text(
-            "❌ Invalid verification request."
-        )
-
-        return
-
-    # ========================================================
-    # ALREADY COMPLETED
-    # ========================================================
-
-    if completed:
-
-        await update.message.reply_text(
-            "⚠️ आपने यह session पहले ही complete कर रखा है।\n\n"
-            "नई verification के लिए वापस जाकर file link पर क्लिक करें।"
-        )
-
-        return
-
-    # ========================================================
-    # COMPLETE SESSION
-    # ========================================================
-
-    completed_now = complete_session(
-        session_id,
-        saved_user_id,
-        saved_file_code
-    )
-
-    # ========================================================
-    # RACE CONDITION / DOUBLE CLICK
-    # ========================================================
-
-    if not completed_now:
-
-        await update.message.reply_text(
-            "⚠️ आपने यह session पहले ही complete कर रखा है।\n\n"
-            "नई verification के लिए वापस जाकर file link पर क्लिक करें।"
-        )
-
-        return
-
-    # ========================================================
-    # VERIFICATION SUCCESS
-    # ========================================================
-
-    keyboard = InlineKeyboardMarkup([
-
-        [
-            InlineKeyboardButton(
-                "📥 Get File",
-                callback_data=f"getfile:{session_id}"
-            )
-        ]
-
-    ])
-
-    await update.message.reply_text(
-
-        "✅ Verification successful!\n\n"
-        "आपकी verification complete हो गई है।\n"
-        "नीचे दिए गए button से अपनी file प्राप्त करें।",
-
-        reply_markup=keyboard
-    )
-
-
-# ============================================================
-# GET FILE BUTTON
-# ============================================================
-
-async def get_file_callback(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    query = update.callback_query
-
-    if not query:
-        return
-
-    await query.answer()
-
-    if not query.from_user:
-        return
-
-    # ========================================================
-    # CALLBACK DATA
-    # ========================================================
-
-    callback_data = query.data or ""
-
-    if not callback_data.startswith("getfile:"):
-
-        return
-
-    session_id = callback_data.replace(
-        "getfile:",
-        "",
-        1
-    )
-
-    # ========================================================
-    # GET SESSION
-    # ========================================================
-
-    session = get_session(session_id)
-
-    if not session:
-
-        await query.message.reply_text(
-            "❌ Verification session नहीं मिली।\n\n"
-            "नई verification के लिए वापस जाकर file link पर क्लिक करें।"
-        )
-
-        return
-
-    (
-        saved_session_id,
-        saved_user_id,
-        file_code,
-        completed
-    ) = session
-
-    # ========================================================
-    # USER CHECK
-    # ========================================================
-
-    if saved_user_id != query.from_user.id:
-
-        await query.message.reply_text(
-            "❌ यह file button आपके लिए valid नहीं है।"
-        )
-
-        return
-
-    # ========================================================
-    # COMPLETION CHECK
-    # ========================================================
-
-    if not completed:
-
-        await query.message.reply_text(
-            "❌ पहले verification complete करें।"
-        )
-
-        return
-
-    # ========================================================
-    # GET FILE
-    # ========================================================
-
-    file_id = get_file(file_code)
-
-    if not file_id:
-
-        await query.message.reply_text(
-            "❌ File nahi mili ya link invalid hai."
-        )
-
-        return
-
-    # ========================================================
-    # SEND FILE
-    # ========================================================
-
-    await query.message.reply_text(
-        "📤 File sending..."
-    )
-
-    await send_file(
-        query.from_user.id,
-        file_id,
-        context
-    )
-
-
-# ============================================================
+# =========================
 # SEND FILE
-# ============================================================
+# =========================
 
 async def send_file(
     user_id,
@@ -730,11 +253,13 @@ async def send_file(
         "🗑️ File 90 seconds ke baad automatically delete ho jayegi."
     )
 
+
     sent_message = None
 
-    # ========================================================
+
+    # =========================
     # DOCUMENT
-    # ========================================================
+    # =========================
 
     try:
 
@@ -748,9 +273,10 @@ async def send_file(
 
         pass
 
-    # ========================================================
+
+    # =========================
     # VIDEO
-    # ========================================================
+    # =========================
 
     if sent_message is None:
 
@@ -766,9 +292,10 @@ async def send_file(
 
             pass
 
-    # ========================================================
+
+    # =========================
     # AUDIO
-    # ========================================================
+    # =========================
 
     if sent_message is None:
 
@@ -784,9 +311,10 @@ async def send_file(
 
             pass
 
-    # ========================================================
+
+    # =========================
     # PHOTO
-    # ========================================================
+    # =========================
 
     if sent_message is None:
 
@@ -802,9 +330,10 @@ async def send_file(
 
             pass
 
-    # ========================================================
+
+    # =========================
     # FAILED
-    # ========================================================
+    # =========================
 
     if sent_message is None:
 
@@ -818,9 +347,10 @@ async def send_file(
 
         return
 
-    # ========================================================
+
+    # =========================
     # DELETE AFTER 90 SECONDS
-    # ========================================================
+    # =========================
 
     asyncio.create_task(
         delete_file_later(
@@ -831,9 +361,9 @@ async def send_file(
     )
 
 
-# ============================================================
-# DELETE FILE AFTER 90 SECONDS
-# ============================================================
+# =========================
+# DELETE FILE AFTER 90 SEC
+# =========================
 
 async def delete_file_later(
     context,
@@ -855,9 +385,9 @@ async def delete_file_later(
         pass
 
 
-# ============================================================
+# =========================
 # UPLOAD COMMAND
-# ============================================================
+# =========================
 
 async def upload_command(
     update: Update,
@@ -867,6 +397,7 @@ async def upload_command(
     if not update.effective_user:
         return
 
+
     if update.effective_user.id != ADMIN_ID:
 
         await update.message.reply_text(
@@ -875,5 +406,292 @@ async def upload_command(
 
         return
 
+
     await update.message.reply_text(
-        "📤 Ab mujhe file
+        "📤 Ab mujhe file bhejo.\n\n"
+        "Main uska unique link bana dunga."
+    )
+
+
+# =========================
+# RECEIVE FILE
+# =========================
+
+async def receive_file(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    if not update.effective_user:
+        return
+
+
+    if update.effective_user.id != ADMIN_ID:
+        return
+
+
+    if not update.message:
+        return
+
+
+    telegram_file_id = None
+
+
+    # =========================
+    # DOCUMENT
+    # =========================
+
+    if update.message.document:
+
+        telegram_file_id = (
+            update.message.document.file_id
+        )
+
+
+    # =========================
+    # VIDEO
+    # =========================
+
+    elif update.message.video:
+
+        telegram_file_id = (
+            update.message.video.file_id
+        )
+
+
+    # =========================
+    # AUDIO
+    # =========================
+
+    elif update.message.audio:
+
+        telegram_file_id = (
+            update.message.audio.file_id
+        )
+
+
+    # =========================
+    # PHOTO
+    # =========================
+
+    elif update.message.photo:
+
+        telegram_file_id = (
+            update.message.photo[-1].file_id
+        )
+
+
+    # =========================
+    # UNSUPPORTED
+    # =========================
+
+    if not telegram_file_id:
+
+        await update.message.reply_text(
+            "❌ Ye file type supported nahi hai."
+        )
+
+        return
+
+
+    # =========================
+    # UNIQUE CODE
+    # =========================
+
+    code = f"file_{update.message.message_id}"
+
+
+    # =========================
+    # SAVE IN POSTGRESQL
+    # =========================
+
+    save_file(
+        code,
+        telegram_file_id
+    )
+
+
+    bot_username = context.bot.username
+
+
+    # =========================
+    # CREATE FILE LINK
+    # =========================
+
+    link = (
+        f"https://t.me/"
+        f"{bot_username}"
+        f"?start={code}"
+    )
+
+
+    # =========================
+    # ADMIN RESPONSE
+    # =========================
+
+    await update.message.reply_text(
+
+        "✅ FILE SAVED SUCCESSFULLY!\n\n"
+
+        f"🔗 File Link:\n{link}\n\n"
+
+        "Is link ko Telegram channel mein "
+        "post kar sakte ho."
+
+    )
+
+
+# =========================
+# ADMIN
+# =========================
+
+async def admin_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    if not update.effective_user:
+        return
+
+
+    if update.effective_user.id != ADMIN_ID:
+        return
+
+
+    await update.message.reply_text(
+
+        "👑 ADMIN PANEL\n\n"
+        "/upload - File upload karein\n"
+        "/admin - Admin commands"
+
+    )
+
+
+# =========================
+# MAIN
+# =========================
+
+def main():
+
+    # =========================
+    # CHECK BOT TOKEN
+    # =========================
+
+    if not BOT_TOKEN:
+
+        raise ValueError(
+            "BOT_TOKEN environment variable missing hai."
+        )
+
+
+    # =========================
+    # CHECK ADMIN ID
+    # =========================
+
+    if ADMIN_ID == 0:
+
+        raise ValueError(
+            "ADMIN_ID environment variable missing hai."
+        )
+
+
+    # =========================
+    # CHECK DATABASE
+    # =========================
+
+    if not DATABASE_URL:
+
+        raise ValueError(
+            "DATABASE_URL environment variable missing hai."
+        )
+
+
+    # =========================
+    # CREATE DATABASE TABLE
+    # =========================
+
+    init_db()
+
+
+    # =========================
+    # CREATE BOT
+    # =========================
+
+    app = (
+        Application
+        .builder()
+        .token(BOT_TOKEN)
+        .build()
+    )
+
+
+    # =========================
+    # START COMMAND
+    # =========================
+
+    app.add_handler(
+        CommandHandler(
+            "start",
+            start
+        )
+    )
+
+
+    # =========================
+    # UPLOAD COMMAND
+    # =========================
+
+    app.add_handler(
+        CommandHandler(
+            "upload",
+            upload_command
+        )
+    )
+
+
+    # =========================
+    # ADMIN COMMAND
+    # =========================
+
+    app.add_handler(
+        CommandHandler(
+            "admin",
+            admin_command
+        )
+    )
+
+
+    # =========================
+    # FILE RECEIVER
+    # =========================
+
+    app.add_handler(
+        MessageHandler(
+            filters.Document.ALL
+            | filters.VIDEO
+            | filters.AUDIO
+            | filters.PHOTO,
+            receive_file
+        )
+    )
+
+
+    # =========================
+    # START BOT
+    # =========================
+
+    print(
+        "🤖 Indo Share Bot Started..."
+    )
+
+
+    app.run_polling()
+
+
+# =========================
+# RUN
+# =========================
+
+if __name__ == "__main__":
+
+    main()
