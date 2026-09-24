@@ -1,5 +1,6 @@
 import os
 import asyncio
+import secrets
 import psycopg2
 
 from telegram import (
@@ -45,7 +46,6 @@ def get_connection():
 
     database_url = DATABASE_URL
 
-    # Kuch services old postgres:// format deti hain
     if database_url.startswith("postgres://"):
         database_url = database_url.replace(
             "postgres://",
@@ -57,21 +57,41 @@ def get_connection():
 
 
 # =========================
-# CREATE TABLE
+# CREATE DATABASE TABLES
 # =========================
 
 def init_db():
 
     conn = get_connection()
-
     cur = conn.cursor()
 
+    # OLD FILE TABLE
+    # Is table ka purana data delete nahi hoga.
     cur.execute("""
         CREATE TABLE IF NOT EXISTS files (
             id SERIAL PRIMARY KEY,
             code TEXT UNIQUE NOT NULL,
             file_id TEXT NOT NULL
         )
+    """)
+
+    # NEW SESSION TABLE
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS unlock_sessions (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT NOT NULL,
+            code TEXT NOT NULL,
+            token TEXT UNIQUE NOT NULL,
+            status TEXT NOT NULL DEFAULT 'active',
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            completed_at TIMESTAMPTZ,
+            message_id BIGINT
+        )
+    """)
+
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_unlock_sessions_user_code
+        ON unlock_sessions (user_id, code)
     """)
 
     conn.commit()
@@ -87,7 +107,6 @@ def init_db():
 def save_file(code, file_id):
 
     conn = get_connection()
-
     cur = conn.cursor()
 
     cur.execute("""
@@ -110,7 +129,6 @@ def save_file(code, file_id):
 def get_file(code):
 
     conn = get_connection()
-
     cur = conn.cursor()
 
     cur.execute(
@@ -130,6 +148,145 @@ def get_file(code):
 
 
 # =========================
+# CREATE NEW SESSION
+# =========================
+
+def create_session(user_id, code):
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # Purane sessions ko expire kar do.
+    cur.execute("""
+        UPDATE unlock_sessions
+        SET status = 'expired'
+        WHERE user_id = %s
+        AND code = %s
+        AND status IN ('active', 'verified')
+    """, (user_id, code))
+
+    # Short unique token
+    token = secrets.token_hex(8)
+
+    cur.execute("""
+        INSERT INTO unlock_sessions
+        (
+            user_id,
+            code,
+            token,
+            status
+        )
+        VALUES (%s, %s, %s, 'active')
+        RETURNING id
+    """, (
+        user_id,
+        code,
+        token
+    ))
+
+    session_id = cur.fetchone()[0]
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+    return token, session_id
+
+
+# =========================
+# SAVE BOT MESSAGE ID
+# =========================
+
+def save_session_message_id(session_id, message_id):
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE unlock_sessions
+        SET message_id = %s
+        WHERE id = %s
+    """, (
+        message_id,
+        session_id
+    ))
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+
+# =========================
+# COMPLETE SESSION
+# =========================
+
+def complete_session(
+    user_id,
+    code,
+    token
+):
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # Sirf ACTIVE session ko SENT banayenge.
+    # Agar already sent/expired hai to kuch nahi hoga.
+    cur.execute("""
+        UPDATE unlock_sessions
+        SET
+            status = 'sent',
+            completed_at = NOW()
+        WHERE user_id = %s
+        AND code = %s
+        AND token = %s
+        AND status = 'active'
+        RETURNING id
+    """, (
+        user_id,
+        code,
+        token
+    ))
+
+    result = cur.fetchone()
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+    if result:
+        return "new"
+
+    # Check karo session already sent hai ya nahi
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT status
+        FROM unlock_sessions
+        WHERE user_id = %s
+        AND code = %s
+        AND token = %s
+    """, (
+        user_id,
+        code,
+        token
+    ))
+
+    result = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    if result and result[0] == "sent":
+        return "already_sent"
+
+    return "invalid"
+
+
+# =========================
 # START
 # =========================
 
@@ -139,6 +296,9 @@ async def start(
 ):
 
     if not update.message:
+        return
+
+    if not update.effective_user:
         return
 
     args = context.args
@@ -156,18 +316,36 @@ async def start(
 
         return
 
-    code = args[0]
+    payload = args[0]
 
 
-    # =========================
-    # COMPLETED FILE REQUEST
-    # =========================
+    # ==================================================
+    # MINI APP VERIFICATION COMPLETE
+    #
+    # Format:
+    # complete_file_123_TOKEN
+    # ==================================================
 
-    if code.startswith("complete_"):
+    if payload.startswith("complete_"):
 
-        file_code = code.replace(
+        complete_data = payload.replace(
             "complete_",
             "",
+            1
+        )
+
+        # Last "_" ke baad session token hoga.
+        # Isse file code ke "_" safe rahenge.
+        if "_" not in complete_data:
+
+            await update.message.reply_text(
+                "❌ Verification session invalid hai."
+            )
+
+            return
+
+        file_code, session_token = complete_data.rsplit(
+            "_",
             1
         )
 
@@ -181,6 +359,51 @@ async def start(
 
             return
 
+
+        # =========================
+        # CHECK SESSION
+        # =========================
+
+        result = complete_session(
+            update.effective_user.id,
+            file_code,
+            session_token
+        )
+
+
+        # =========================
+        # ALREADY COMPLETED
+        # =========================
+
+        if result == "already_sent":
+
+            await update.message.reply_text(
+                "⚠️ Aapne ye session pehle hi complete kar rakha hai.\n\n"
+                "📎 Dobara file lene ke liye pehle "
+                "original file link par click karke aayein."
+            )
+
+            return
+
+
+        # =========================
+        # INVALID SESSION
+        # =========================
+
+        if result == "invalid":
+
+            await update.message.reply_text(
+                "❌ Verification session invalid ya expire ho gaya hai.\n\n"
+                "📎 Dobara file lene ke liye original file link par click karein."
+            )
+
+            return
+
+
+        # =========================
+        # NEW SESSION COMPLETE
+        # =========================
+
         await send_file(
             update.effective_user.id,
             file_id,
@@ -190,9 +413,11 @@ async def start(
         return
 
 
-    # =========================
+    # ==================================================
     # NORMAL FILE LINK
-    # =========================
+    # ==================================================
+
+    code = payload
 
     file_id = get_file(code)
 
@@ -206,7 +431,28 @@ async def start(
 
 
     # =========================
-    # MINI APP BUTTON
+    # CREATE NEW SESSION
+    # =========================
+
+    session_token, session_id = create_session(
+        update.effective_user.id,
+        code
+    )
+
+
+    # =========================
+    # MINI APP URL
+    # =========================
+
+    mini_app_link = (
+        f"{MINI_APP_URL}"
+        f"?file={code}"
+        f"&session={session_token}"
+    )
+
+
+    # =========================
+    # BUTTON
     # =========================
 
     keyboard = InlineKeyboardMarkup([
@@ -215,7 +461,7 @@ async def start(
             InlineKeyboardButton(
                 "📥 Watch Ad & Unlock",
                 web_app=WebAppInfo(
-                    url=f"{MINI_APP_URL}?file={code}"
+                    url=mini_app_link
                 )
             )
         ]
@@ -224,16 +470,26 @@ async def start(
 
 
     # =========================
-    # SEND ONE QUICK STEP
+    # SEND MESSAGE
     # =========================
 
-    await update.message.reply_text(
+    sent_message = await update.message.reply_text(
 
         "🔐 One quick step\n\n"
         "Watch a short ad to unlock this file, "
         "then you'll be brought right back.",
 
         reply_markup=keyboard
+    )
+
+
+    # =========================
+    # SAVE MESSAGE ID
+    # =========================
+
+    save_session_message_id(
+        session_id,
+        sent_message.message_id
     )
 
 
@@ -607,7 +863,7 @@ def main():
 
 
     # =========================
-    # CREATE DATABASE TABLE
+    # CREATE DATABASE TABLES
     # =========================
 
     init_db()
