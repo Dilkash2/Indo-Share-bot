@@ -45,7 +45,6 @@ def get_connection():
 
     database_url = DATABASE_URL
 
-    # Kuch services old postgres:// format deti hain
     if database_url.startswith("postgres://"):
         database_url = database_url.replace(
             "postgres://",
@@ -57,14 +56,17 @@ def get_connection():
 
 
 # =========================
-# CREATE TABLE
+# CREATE TABLES
 # =========================
 
 def init_db():
 
     conn = get_connection()
-
     cur = conn.cursor()
+
+    # =========================
+    # EXISTING FILES TABLE
+    # =========================
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS files (
@@ -73,6 +75,84 @@ def init_db():
             file_id TEXT NOT NULL
         )
     """)
+
+    # =========================
+    # USERS TABLE
+    # =========================
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT UNIQUE NOT NULL,
+            first_seen TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            last_seen TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+    """)
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+
+# =========================
+# SAVE / UPDATE USER
+# =========================
+
+def save_user(user_id):
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        INSERT INTO users (user_id)
+        VALUES (%s)
+        ON CONFLICT (user_id)
+        DO UPDATE SET last_seen = NOW()
+    """, (user_id,))
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+
+# =========================
+# GET ALL USERS
+# =========================
+
+def get_all_users():
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT user_id
+        FROM users
+        ORDER BY id ASC
+    """)
+
+    users = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return [row[0] for row in users]
+
+
+# =========================
+# DELETE USER
+# =========================
+
+def delete_user(user_id):
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        "DELETE FROM users WHERE user_id = %s",
+        (user_id,)
+    )
 
     conn.commit()
 
@@ -141,6 +221,13 @@ async def start(
     if not update.message:
         return
 
+    # =========================
+    # SAVE USER
+    # =========================
+
+    if update.effective_user:
+        save_user(update.effective_user.id)
+
     args = context.args
 
     # =========================
@@ -157,7 +244,6 @@ async def start(
         return
 
     code = args[0]
-
 
     # =========================
     # COMPLETED FILE REQUEST
@@ -189,7 +275,6 @@ async def start(
 
         return
 
-
     # =========================
     # NORMAL FILE LINK
     # =========================
@@ -203,7 +288,6 @@ async def start(
         )
 
         return
-
 
     # =========================
     # MINI APP BUTTON
@@ -222,9 +306,8 @@ async def start(
 
     ])
 
-
     # =========================
-    # SEND ONE QUICK STEP
+    # SEND MESSAGE
     # =========================
 
     await update.message.reply_text(
@@ -253,9 +336,7 @@ async def send_file(
         "🗑️ File 90 seconds ke baad automatically delete ho jayegi."
     )
 
-
     sent_message = None
-
 
     # =========================
     # DOCUMENT
@@ -272,7 +353,6 @@ async def send_file(
     except TelegramError:
 
         pass
-
 
     # =========================
     # VIDEO
@@ -292,7 +372,6 @@ async def send_file(
 
             pass
 
-
     # =========================
     # AUDIO
     # =========================
@@ -310,7 +389,6 @@ async def send_file(
         except TelegramError:
 
             pass
-
 
     # =========================
     # PHOTO
@@ -330,7 +408,6 @@ async def send_file(
 
             pass
 
-
     # =========================
     # FAILED
     # =========================
@@ -346,7 +423,6 @@ async def send_file(
         )
 
         return
-
 
     # =========================
     # DELETE AFTER 90 SECONDS
@@ -397,6 +473,7 @@ async def upload_command(
     if not update.effective_user:
         return
 
+    save_user(update.effective_user.id)
 
     if update.effective_user.id != ADMIN_ID:
 
@@ -405,7 +482,6 @@ async def upload_command(
         )
 
         return
-
 
     await update.message.reply_text(
         "📤 Ab mujhe file bhejo.\n\n"
@@ -425,17 +501,13 @@ async def receive_file(
     if not update.effective_user:
         return
 
-
     if update.effective_user.id != ADMIN_ID:
         return
-
 
     if not update.message:
         return
 
-
     telegram_file_id = None
-
 
     # =========================
     # DOCUMENT
@@ -447,7 +519,6 @@ async def receive_file(
             update.message.document.file_id
         )
 
-
     # =========================
     # VIDEO
     # =========================
@@ -457,7 +528,6 @@ async def receive_file(
         telegram_file_id = (
             update.message.video.file_id
         )
-
 
     # =========================
     # AUDIO
@@ -469,7 +539,6 @@ async def receive_file(
             update.message.audio.file_id
         )
 
-
     # =========================
     # PHOTO
     # =========================
@@ -479,7 +548,6 @@ async def receive_file(
         telegram_file_id = (
             update.message.photo[-1].file_id
         )
-
 
     # =========================
     # UNSUPPORTED
@@ -493,13 +561,11 @@ async def receive_file(
 
         return
 
-
     # =========================
     # UNIQUE CODE
     # =========================
 
     code = f"file_{update.message.message_id}"
-
 
     # =========================
     # SAVE IN POSTGRESQL
@@ -510,9 +576,7 @@ async def receive_file(
         telegram_file_id
     )
 
-
     bot_username = context.bot.username
-
 
     # =========================
     # CREATE FILE LINK
@@ -523,7 +587,6 @@ async def receive_file(
         f"{bot_username}"
         f"?start={code}"
     )
-
 
     # =========================
     # ADMIN RESPONSE
@@ -542,6 +605,161 @@ async def receive_file(
 
 
 # =========================
+# BROADCAST COMMAND
+# =========================
+
+async def broadcast_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    if not update.effective_user:
+        return
+
+    if update.effective_user.id != ADMIN_ID:
+
+        await update.message.reply_text(
+            "❌ Sirf admin broadcast kar sakta hai."
+        )
+
+        return
+
+    # =========================
+    # WAIT FOR NEXT MESSAGE
+    # =========================
+
+    context.user_data["broadcast_waiting"] = True
+
+    await update.message.reply_text(
+        "📢 Broadcast Mode ON\n\n"
+        "Ab jo message sabhi users ko bhejna hai, "
+        "woh bhejo.\n\n"
+        "Text, photo, video ya link bhej sakte ho.\n\n"
+        "❌ Cancel karne ke liye /cancel bhejo."
+    )
+
+
+# =========================
+# BROADCAST MESSAGE
+# =========================
+
+async def broadcast_message(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    if not update.effective_user:
+        return
+
+    if update.effective_user.id != ADMIN_ID:
+        return
+
+    if not context.user_data.get(
+        "broadcast_waiting",
+        False
+    ):
+        return
+
+    if not update.message:
+        return
+
+    # =========================
+    # STOP BROADCAST MODE
+    # =========================
+
+    context.user_data["broadcast_waiting"] = False
+
+    # =========================
+    # GET USERS
+    # =========================
+
+    users = get_all_users()
+
+    if not users:
+
+        await update.message.reply_text(
+            "❌ Abhi database mein koi user nahi hai."
+        )
+
+        return
+
+    await update.message.reply_text(
+        f"📢 Broadcast start ho gaya.\n\n"
+        f"👥 Total users: {len(users)}"
+    )
+
+    success = 0
+    failed = 0
+
+    # =========================
+    # SEND TO USERS
+    # =========================
+
+    for user_id in users:
+
+        try:
+
+            await context.bot.copy_message(
+                chat_id=user_id,
+                from_chat_id=update.effective_chat.id,
+                message_id=update.message.message_id
+            )
+
+            success += 1
+
+            # Telegram rate limit se bachne ke liye
+            await asyncio.sleep(0.05)
+
+        except TelegramError:
+
+            failed += 1
+
+            # Agar user ne bot block kar diya hai
+            # to usko database se remove kar denge
+            try:
+
+                delete_user(user_id)
+
+            except Exception:
+
+                pass
+
+    # =========================
+    # RESULT
+    # =========================
+
+    await update.message.reply_text(
+
+        "✅ Broadcast Complete!\n\n"
+        f"📨 Sent: {success}\n"
+        f"❌ Failed/Blocked: {failed}"
+
+    )
+
+
+# =========================
+# CANCEL BROADCAST
+# =========================
+
+async def cancel_broadcast(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    if not update.effective_user:
+        return
+
+    if update.effective_user.id != ADMIN_ID:
+        return
+
+    context.user_data["broadcast_waiting"] = False
+
+    await update.message.reply_text(
+        "❌ Broadcast cancel kar diya gaya."
+    )
+
+
+# =========================
 # ADMIN
 # =========================
 
@@ -553,15 +771,15 @@ async def admin_command(
     if not update.effective_user:
         return
 
-
     if update.effective_user.id != ADMIN_ID:
         return
-
 
     await update.message.reply_text(
 
         "👑 ADMIN PANEL\n\n"
         "/upload - File upload karein\n"
+        "/broadcast - Sabhi users ko message bhejein\n"
+        "/cancel - Broadcast cancel karein\n"
         "/admin - Admin commands"
 
     )
@@ -583,7 +801,6 @@ def main():
             "BOT_TOKEN environment variable missing hai."
         )
 
-
     # =========================
     # CHECK ADMIN ID
     # =========================
@@ -593,7 +810,6 @@ def main():
         raise ValueError(
             "ADMIN_ID environment variable missing hai."
         )
-
 
     # =========================
     # CHECK DATABASE
@@ -605,13 +821,11 @@ def main():
             "DATABASE_URL environment variable missing hai."
         )
 
-
     # =========================
-    # CREATE DATABASE TABLE
+    # CREATE DATABASE TABLES
     # =========================
 
     init_db()
-
 
     # =========================
     # CREATE BOT
@@ -624,7 +838,6 @@ def main():
         .build()
     )
 
-
     # =========================
     # START COMMAND
     # =========================
@@ -635,7 +848,6 @@ def main():
             start
         )
     )
-
 
     # =========================
     # UPLOAD COMMAND
@@ -648,6 +860,27 @@ def main():
         )
     )
 
+    # =========================
+    # BROADCAST COMMAND
+    # =========================
+
+    app.add_handler(
+        CommandHandler(
+            "broadcast",
+            broadcast_command
+        )
+    )
+
+    # =========================
+    # CANCEL COMMAND
+    # =========================
+
+    app.add_handler(
+        CommandHandler(
+            "cancel",
+            cancel_broadcast
+        )
+    )
 
     # =========================
     # ADMIN COMMAND
@@ -660,6 +893,17 @@ def main():
         )
     )
 
+    # =========================
+    # BROADCAST MESSAGE
+    # =========================
+
+    app.add_handler(
+        MessageHandler(
+            filters.ALL & ~filters.COMMAND,
+            broadcast_message
+        ),
+        group=0
+    )
 
     # =========================
     # FILE RECEIVER
@@ -672,9 +916,9 @@ def main():
             | filters.AUDIO
             | filters.PHOTO,
             receive_file
-        )
+        ),
+        group=1
     )
-
 
     # =========================
     # START BOT
@@ -683,7 +927,6 @@ def main():
     print(
         "🤖 Indo Share Bot Started..."
     )
-
 
     app.run_polling()
 
