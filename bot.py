@@ -64,10 +64,8 @@ def init_db():
     conn = get_connection()
     cur = conn.cursor()
 
-    # =========================
     # EXISTING FILES TABLE
-    # =========================
-
+    # Is table ko delete/update nahi kiya ja raha
     cur.execute("""
         CREATE TABLE IF NOT EXISTS files (
             id SERIAL PRIMARY KEY,
@@ -76,10 +74,7 @@ def init_db():
         )
     """)
 
-    # =========================
     # USERS TABLE
-    # =========================
-
     cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
@@ -96,7 +91,7 @@ def init_db():
 
 
 # =========================
-# SAVE / UPDATE USER
+# SAVE USER
 # =========================
 
 def save_user(user_id):
@@ -141,7 +136,7 @@ def get_all_users():
 
 
 # =========================
-# DELETE USER
+# DELETE BLOCKED USER
 # =========================
 
 def delete_user(user_id):
@@ -161,13 +156,84 @@ def delete_user(user_id):
 
 
 # =========================
+# USER STATS
+# =========================
+
+def get_stats():
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # TOTAL USERS
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM users
+    """)
+
+    total_users = cur.fetchone()[0]
+
+    # THIS MONTH
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM users
+        WHERE first_seen >= date_trunc('month', CURRENT_TIMESTAMP)
+    """)
+
+    this_month = cur.fetchone()[0]
+
+    # LAST MONTH
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM users
+        WHERE first_seen >= date_trunc(
+            'month',
+            CURRENT_TIMESTAMP - INTERVAL '1 month'
+        )
+        AND first_seen < date_trunc(
+            'month',
+            CURRENT_TIMESTAMP
+        )
+    """)
+
+    last_month = cur.fetchone()[0]
+
+    # ACTIVE TODAY
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM users
+        WHERE last_seen >= CURRENT_DATE
+    """)
+
+    today = cur.fetchone()[0]
+
+    # ACTIVE THIS WEEK
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM users
+        WHERE last_seen >= CURRENT_TIMESTAMP - INTERVAL '7 days'
+    """)
+
+    this_week = cur.fetchone()[0]
+
+    cur.close()
+    conn.close()
+
+    return (
+        total_users,
+        this_month,
+        last_month,
+        today,
+        this_week
+    )
+
+
+# =========================
 # SAVE FILE
 # =========================
 
 def save_file(code, file_id):
 
     conn = get_connection()
-
     cur = conn.cursor()
 
     cur.execute("""
@@ -190,7 +256,6 @@ def save_file(code, file_id):
 def get_file(code):
 
     conn = get_connection()
-
     cur = conn.cursor()
 
     cur.execute(
@@ -221,19 +286,13 @@ async def start(
     if not update.message:
         return
 
-    # =========================
     # SAVE USER
-    # =========================
-
     if update.effective_user:
         save_user(update.effective_user.id)
 
     args = context.args
 
-    # =========================
-    # NORMAL /START
-    # =========================
-
+    # NORMAL START
     if not args:
 
         await update.message.reply_text(
@@ -245,10 +304,7 @@ async def start(
 
     code = args[0]
 
-    # =========================
     # COMPLETED FILE REQUEST
-    # =========================
-
     if code.startswith("complete_"):
 
         file_code = code.replace(
@@ -275,10 +331,7 @@ async def start(
 
         return
 
-    # =========================
     # NORMAL FILE LINK
-    # =========================
-
     file_id = get_file(code)
 
     if not file_id:
@@ -289,12 +342,8 @@ async def start(
 
         return
 
-    # =========================
     # MINI APP BUTTON
-    # =========================
-
     keyboard = InlineKeyboardMarkup([
-
         [
             InlineKeyboardButton(
                 "📥 Watch Ad & Unlock",
@@ -303,12 +352,7 @@ async def start(
                 )
             )
         ]
-
     ])
-
-    # =========================
-    # SEND MESSAGE
-    # =========================
 
     await update.message.reply_text(
 
@@ -338,10 +382,7 @@ async def send_file(
 
     sent_message = None
 
-    # =========================
     # DOCUMENT
-    # =========================
-
     try:
 
         sent_message = await context.bot.send_document(
@@ -351,13 +392,9 @@ async def send_file(
         )
 
     except TelegramError:
-
         pass
 
-    # =========================
     # VIDEO
-    # =========================
-
     if sent_message is None:
 
         try:
@@ -369,13 +406,9 @@ async def send_file(
             )
 
         except TelegramError:
-
             pass
 
-    # =========================
     # AUDIO
-    # =========================
-
     if sent_message is None:
 
         try:
@@ -387,13 +420,9 @@ async def send_file(
             )
 
         except TelegramError:
-
             pass
 
-    # =========================
     # PHOTO
-    # =========================
-
     if sent_message is None:
 
         try:
@@ -405,13 +434,9 @@ async def send_file(
             )
 
         except TelegramError:
-
             pass
 
-    # =========================
     # FAILED
-    # =========================
-
     if sent_message is None:
 
         await context.bot.send_message(
@@ -424,10 +449,7 @@ async def send_file(
 
         return
 
-    # =========================
     # DELETE AFTER 90 SECONDS
-    # =========================
-
     asyncio.create_task(
         delete_file_later(
             context,
@@ -457,7 +479,6 @@ async def delete_file_later(
         )
 
     except TelegramError:
-
         pass
 
 
@@ -473,8 +494,6 @@ async def upload_command(
     if not update.effective_user:
         return
 
-    save_user(update.effective_user.id)
-
     if update.effective_user.id != ADMIN_ID:
 
         await update.message.reply_text(
@@ -482,6 +501,8 @@ async def upload_command(
         )
 
         return
+
+    save_user(update.effective_user.id)
 
     await update.message.reply_text(
         "📤 Ab mujhe file bhejo.\n\n"
@@ -509,19 +530,11 @@ async def receive_file(
 
     telegram_file_id = None
 
-    # =========================
-    # DOCUMENT
-    # =========================
-
     if update.message.document:
 
         telegram_file_id = (
             update.message.document.file_id
         )
-
-    # =========================
-    # VIDEO
-    # =========================
 
     elif update.message.video:
 
@@ -529,29 +542,17 @@ async def receive_file(
             update.message.video.file_id
         )
 
-    # =========================
-    # AUDIO
-    # =========================
-
     elif update.message.audio:
 
         telegram_file_id = (
             update.message.audio.file_id
         )
 
-    # =========================
-    # PHOTO
-    # =========================
-
     elif update.message.photo:
 
         telegram_file_id = (
             update.message.photo[-1].file_id
         )
-
-    # =========================
-    # UNSUPPORTED
-    # =========================
 
     if not telegram_file_id:
 
@@ -561,15 +562,7 @@ async def receive_file(
 
         return
 
-    # =========================
-    # UNIQUE CODE
-    # =========================
-
     code = f"file_{update.message.message_id}"
-
-    # =========================
-    # SAVE IN POSTGRESQL
-    # =========================
 
     save_file(
         code,
@@ -578,19 +571,11 @@ async def receive_file(
 
     bot_username = context.bot.username
 
-    # =========================
-    # CREATE FILE LINK
-    # =========================
-
     link = (
         f"https://t.me/"
         f"{bot_username}"
         f"?start={code}"
     )
-
-    # =========================
-    # ADMIN RESPONSE
-    # =========================
 
     await update.message.reply_text(
 
@@ -624,18 +609,16 @@ async def broadcast_command(
 
         return
 
-    # =========================
-    # WAIT FOR NEXT MESSAGE
-    # =========================
-
     context.user_data["broadcast_waiting"] = True
 
     await update.message.reply_text(
+
         "📢 Broadcast Mode ON\n\n"
         "Ab jo message sabhi users ko bhejna hai, "
         "woh bhejo.\n\n"
         "Text, photo, video ya link bhej sakte ho.\n\n"
         "❌ Cancel karne ke liye /cancel bhejo."
+
     )
 
 
@@ -663,15 +646,7 @@ async def broadcast_message(
     if not update.message:
         return
 
-    # =========================
-    # STOP BROADCAST MODE
-    # =========================
-
     context.user_data["broadcast_waiting"] = False
-
-    # =========================
-    # GET USERS
-    # =========================
 
     users = get_all_users()
 
@@ -691,10 +666,6 @@ async def broadcast_message(
     success = 0
     failed = 0
 
-    # =========================
-    # SEND TO USERS
-    # =========================
-
     for user_id in users:
 
         try:
@@ -707,26 +678,16 @@ async def broadcast_message(
 
             success += 1
 
-            # Telegram rate limit se bachne ke liye
             await asyncio.sleep(0.05)
 
         except TelegramError:
 
             failed += 1
 
-            # Agar user ne bot block kar diya hai
-            # to usko database se remove kar denge
             try:
-
                 delete_user(user_id)
-
             except Exception:
-
                 pass
-
-    # =========================
-    # RESULT
-    # =========================
 
     await update.message.reply_text(
 
@@ -760,6 +721,44 @@ async def cancel_broadcast(
 
 
 # =========================
+# STATS COMMAND
+# =========================
+
+async def stats_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    if not update.effective_user:
+        return
+
+    if update.effective_user.id != ADMIN_ID:
+        return
+
+    (
+        total_users,
+        this_month,
+        last_month,
+        today,
+        this_week
+    ) = get_stats()
+
+    await update.message.reply_text(
+
+        "📊 INDO SHARE STATS\n\n"
+
+        f"👥 Total Users: {total_users}\n\n"
+
+        f"📅 This Month: {this_month}\n"
+        f"📅 Last Month: {last_month}\n\n"
+
+        f"🟢 Active Today: {today}\n"
+        f"🟢 Active This Week: {this_week}"
+
+    )
+
+
+# =========================
 # ADMIN
 # =========================
 
@@ -777,8 +776,10 @@ async def admin_command(
     await update.message.reply_text(
 
         "👑 ADMIN PANEL\n\n"
+
         "/upload - File upload karein\n"
         "/broadcast - Sabhi users ko message bhejein\n"
+        "/stats - Users statistics dekhein\n"
         "/cancel - Broadcast cancel karein\n"
         "/admin - Admin commands"
 
@@ -791,19 +792,11 @@ async def admin_command(
 
 def main():
 
-    # =========================
-    # CHECK BOT TOKEN
-    # =========================
-
     if not BOT_TOKEN:
 
         raise ValueError(
             "BOT_TOKEN environment variable missing hai."
         )
-
-    # =========================
-    # CHECK ADMIN ID
-    # =========================
 
     if ADMIN_ID == 0:
 
@@ -811,25 +804,14 @@ def main():
             "ADMIN_ID environment variable missing hai."
         )
 
-    # =========================
-    # CHECK DATABASE
-    # =========================
-
     if not DATABASE_URL:
 
         raise ValueError(
             "DATABASE_URL environment variable missing hai."
         )
 
-    # =========================
-    # CREATE DATABASE TABLES
-    # =========================
-
+    # DATABASE MEIN EXISTING DATA SAFE RAHEGA
     init_db()
-
-    # =========================
-    # CREATE BOT
-    # =========================
 
     app = (
         Application
@@ -838,10 +820,7 @@ def main():
         .build()
     )
 
-    # =========================
-    # START COMMAND
-    # =========================
-
+    # START
     app.add_handler(
         CommandHandler(
             "start",
@@ -849,10 +828,7 @@ def main():
         )
     )
 
-    # =========================
-    # UPLOAD COMMAND
-    # =========================
-
+    # UPLOAD
     app.add_handler(
         CommandHandler(
             "upload",
@@ -860,10 +836,7 @@ def main():
         )
     )
 
-    # =========================
-    # BROADCAST COMMAND
-    # =========================
-
+    # BROADCAST
     app.add_handler(
         CommandHandler(
             "broadcast",
@@ -871,10 +844,15 @@ def main():
         )
     )
 
-    # =========================
-    # CANCEL COMMAND
-    # =========================
+    # STATS
+    app.add_handler(
+        CommandHandler(
+            "stats",
+            stats_command
+        )
+    )
 
+    # CANCEL
     app.add_handler(
         CommandHandler(
             "cancel",
@@ -882,10 +860,7 @@ def main():
         )
     )
 
-    # =========================
-    # ADMIN COMMAND
-    # =========================
-
+    # ADMIN
     app.add_handler(
         CommandHandler(
             "admin",
@@ -893,10 +868,7 @@ def main():
         )
     )
 
-    # =========================
     # BROADCAST MESSAGE
-    # =========================
-
     app.add_handler(
         MessageHandler(
             filters.ALL & ~filters.COMMAND,
@@ -905,10 +877,7 @@ def main():
         group=0
     )
 
-    # =========================
     # FILE RECEIVER
-    # =========================
-
     app.add_handler(
         MessageHandler(
             filters.Document.ALL
@@ -920,10 +889,6 @@ def main():
         group=1
     )
 
-    # =========================
-    # START BOT
-    # =========================
-
     print(
         "🤖 Indo Share Bot Started..."
     )
@@ -931,10 +896,5 @@ def main():
     app.run_polling()
 
 
-# =========================
-# RUN
-# =========================
-
 if __name__ == "__main__":
-
     main()
